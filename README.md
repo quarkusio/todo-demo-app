@@ -37,3 +37,11 @@ docker run --ulimit memlock=-1:-1 -it --rm=true --memory-swappiness=0 \
     -p 5432:5432 postgres:10.5
 target/todo-backend-*-runner
 ```
+## Other links
+
+- http://localhost:8080/health (Show the build in Health check for the datasource)
+- http://localhost:8080/metrics (Show the default Metrics)
+- http://localhost:8080/openapi (The OpenAPI Schema document in yaml format)
+- http://localhost:8080/swagger-ui (The Swagger UI to test out the REST Endpoints)
+- http://localhost:8080/graphql/schema.graphql (The GraphQL Schema document)
+- http://localhost:8080/graphql-ui/ (The GraphiQL UI to test out the GraphQL Endpoint)
