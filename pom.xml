@@ -1,20 +1,5 @@
 <?xml version="1.0"?>
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
-<<<<<<< HEAD
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>io.quarkus.sample</groupId>
-  <artifactId>todo-backend</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <properties>
-    <surefire-plugin.version>2.22.0</surefire-plugin.version>
-    <quarkus.version>1.2.1.Final</quarkus.version>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
-  <dependencyManagement>
-=======
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.quarkus.sample</groupId>
@@ -30,12 +15,12 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <quarkus-plugin.version>1.6.0.Final</quarkus-plugin.version>
+        <quarkus-plugin.version>1.7.5.Final-redhat-00007</quarkus-plugin.version>
         <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
-        <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-        <quarkus.platform.version>1.6.0.Final</quarkus.platform.version>
-        <surefire-plugin.version>2.22.1</surefire-plugin.version>
-    </properties>
+        <quarkus.platform.group-id>com.redhat.quarkus</quarkus.platform.group-id>
+        <quarkus.platform.version>1.7.5.Final-redhat-00007</quarkus.platform.version>
+        <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+      </properties>
     
     <dependencyManagement>
         <dependencies>
@@ -49,7 +34,6 @@
         </dependencies>
     </dependencyManagement>
     
->>>>>>> 19328bb55f6e41446f25afde66fec04003e41927
     <dependencies>
         <dependency>
             <groupId>io.quarkus</groupId>
