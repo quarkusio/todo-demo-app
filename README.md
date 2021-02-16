@@ -32,8 +32,10 @@ mvn clean package -Pnative
 Run:
 ```bash
 docker run --ulimit memlock=-1:-1 -it --rm=true --memory-swappiness=0 \
-    --name postgres-quarkus-rest-http-crud -e POSTGRES_USER=restcrud \
-    -e POSTGRES_PASSWORD=restcrud -e POSTGRES_DB=rest-crud \
+    --name postgres-quarkus-rest-http-crud \
+    -e POSTGRES_USER=restcrud \
+    -e POSTGRES_PASSWORD=restcrud \
+    -e POSTGRES_DB=rest-crud \
     -p 5432:5432 postgres:10.5
 target/todo-backend-*-runner
 ```
@@ -45,3 +47,4 @@ target/todo-backend-*-runner
 - http://localhost:8080/swagger-ui (The Swagger UI to test out the REST Endpoints)
 - http://localhost:8080/graphql/schema.graphql (The GraphQL Schema document)
 - http://localhost:8080/graphql-ui/ (The GraphiQL UI to test out the GraphQL Endpoint)
+- http://localhost:8080/q/dev/ (Show dev ui)
