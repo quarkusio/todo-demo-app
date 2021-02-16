@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.validation.constraints.NotBlank;
 import java.util.List;
 
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+
 @Entity
 public class Todo extends PanacheEntity {
 
@@ -19,6 +21,7 @@ public class Todo extends PanacheEntity {
     @Column(name = "ordering")
     public int order;
 
+    @Schema(example="https://github.com/quarkusio/todo-demo-app")
     public String url;
 
     public static List<Todo> findNotCompleted() {
