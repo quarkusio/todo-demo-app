@@ -1,11 +1,14 @@
 package io.quarkus.sample;
 
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
+import io.micrometer.core.instrument.Timer.Sample;
 import io.quarkus.panache.common.Sort;
 
+import javax.inject.Inject;
 import javax.transaction.Transactional;
 import javax.validation.Valid;
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 import java.util.List;
@@ -15,6 +18,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Path("/api")
 @Tag(name = "Todo Resource", description = "All Todo Operations")
 public class TodoResource {
+	
+	@Inject
+	MeterRegistry registry;
 
     @OPTIONS
     @Operation(hidden = true)
@@ -43,8 +49,17 @@ public class TodoResource {
     @Transactional
     @Operation(description = "Create a new todo")
     public Response create(@Valid Todo item) {
-        item.persist();
-        return Response.status(Status.CREATED).entity(item).build();
+    	// Measure of how long it takes to perform a create.
+		Timer timer = Timer.builder("createTimer").register(registry);		
+		Sample sample = Timer.start(registry);
+		item.persist();
+		Response response = Response.status(Status.CREATED).entity(item).build();
+		sample.stop(timer);
+		
+		// How many create have been performed.		
+		this.registry.counter("createPerformed").increment();
+		
+		return response;
     }
 
     @PATCH
