@@ -29,16 +29,41 @@ Compile:
 git checkout --track origin/postgresql
 mvn clean package -Pnative
 ```
-Run:
+Run using docker:
 ```bash
 docker run --ulimit memlock=-1:-1 -it --rm=true --memory-swappiness=0 \
     --name postgres-quarkus-rest-http-crud \
     -e POSTGRES_USER=restcrud \
     -e POSTGRES_PASSWORD=restcrud \
     -e POSTGRES_DB=rest-crud \
-    -p 5432:5432 postgres:10.5
+    -p 5432:5432 \
+    postgres:10.5
 target/todo-backend-*-runner
 ```
+
+Run using podman:
+```bash
+podman run -it --rm=true \
+  --name postgres-quarkus-rest-http-crud \
+  -e POSTGRES_USER=restcrud \
+  -e POSTGRES_PASSWORD=restcrud \
+  -e POSTGRES_DB=rest-crud \
+  -p 5432:5432 \
+  postgres:10.5
+target/todo-backend-*-runner  
+```  
+
+## Metrics
+
+Get matrics 
+
+```bash
+curl -H 'Accept: application/json' \
+  http://localhost:8080/q/metrics
+```
+
+Create todos a get the matric again. 
+
 ## Other links
 
 - http://localhost:8080/health (Show the build in Health check for the datasource)
