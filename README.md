@@ -14,6 +14,7 @@ mvn package
 java -jar target/todo-backend-1.0-SNAPSHOT-runner.jar
 ```
 
+
 Then, open: http://localhost:8080/
 
 ## Development mode
