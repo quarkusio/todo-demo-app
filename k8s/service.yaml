@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: todo-demo-app
+    app.kubernetes.io/component: todo-demo-app
+    app.kubernetes.io/instance: todo-demo-app
+    app.kubernetes.io/name: todo-demo-app
+    app.kubernetes.io/part-of: todo-demo-app-app
+    app.openshift.io/runtime: java
+    app.openshift.io/runtime-version: openjdk-17-ubi8
+  name: todo-demo-app
+spec:
+  internalTrafficPolicy: Cluster
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: 8443-tcp
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  selector:
+    app: todo-demo-app
+    deploymentconfig: todo-demo-app
+  sessionAffinity: None
+  type: ClusterIP
