@@ -1,0 +1,117 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: todo-demo-app-push
+  annotations:
+    # The event we are targeting (ie: pull_request, push)
+    pipelinesascode.tekton.dev/on-event: "[push]"
+
+    # The branch or tag we are targeting (ie: main, refs/tags/*)
+    pipelinesascode.tekton.dev/on-target-branch: "[main]"
+
+    # Fetch the git-clone task from hub, we are able to reference it with taskRef
+    pipelinesascode.tekton.dev/task: "[stackrox-image-check]"
+
+    # You can add more tasks in here to reuse, browse the one you like from here
+    # https://hub.tekton.dev/
+    # example:
+    # pipelinesascode.tekton.dev/task-1: "[maven, buildah]"
+
+    # How many runs we want to keep attached to this event
+    pipelinesascode.tekton.dev/max-keep-runs: "5"
+spec:
+  params:
+    - name: APP_NAME
+      value: todo-demo-app
+    - name: GIT_REPO
+      value: "{{repo_url}}"
+    - name: GIT_REVISION
+      value: "{{revision}}"
+    - name: IMAGE_NAME
+      value: quay.io/siamaksade/todo-demo-app
+    - name: PATH_CONTEXT
+      value: .
+    - name: VERSION
+      value: openjdk-17-ubi8
+  pipelineSpec:
+    params:
+      - name: APP_NAME
+      - name: GIT_REPO
+      - name: GIT_REVISION
+      - name: IMAGE_NAME
+      - name: PATH_CONTEXT
+      - name: VERSION
+    workspaces:
+      - name: workspace
+      - name: basic-auth
+    tasks:
+      - name: fetch-repository
+        params:
+          - name: url
+            value: $(params.GIT_REPO)
+          - name: revision
+            value: $(params.GIT_REVISION)
+          - name: deleteExisting
+            value: 'true'
+        taskRef:
+          kind: ClusterTask
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: workspace
+      - name: build
+        params:
+          - name: IMAGE
+            value: $(params.IMAGE_NAME)
+          - name: TLSVERIFY
+            value: 'false'
+          - name: PATH_CONTEXT
+            value: $(params.PATH_CONTEXT)
+          - name: VERSION
+            value: $(params.VERSION)
+        runAfter:
+          - fetch-repository
+        taskRef:
+          kind: ClusterTask
+          name: s2i-java
+        workspaces:
+          - name: source
+            workspace: workspace
+      - name: deploy
+        params:
+          - name: SCRIPT
+            value: oc rollout status deploy/$(params.APP_NAME)
+        runAfter:
+          - check-build-policies
+        taskRef:
+          kind: ClusterTask
+          name: openshift-client
+      - name: check-build-policies
+        taskRef:
+          name: stackrox-image-check
+        params:
+          - name: rox_central_endpoint
+            value: acs-ci-task
+          - name: rox_api_token
+            value: acs-ci-task
+          - name: image
+            value: $(params.IMAGE_NAME)
+          - name: insecure-skip-tls-verify
+            value: 'true'
+        runAfter:
+          - build
+  workspaces:
+  - name: workspace
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  # This workspace will inject secret to help the git-clone task to be able to
+  # checkout the private repositories
+  - name: basic-auth
+    secret:
+      secretName: "pac-git-basic-auth-{{repo_owner}}-{{repo_name}}"
+      
