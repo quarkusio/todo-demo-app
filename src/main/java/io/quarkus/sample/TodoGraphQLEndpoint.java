@@ -2,7 +2,7 @@ package io.quarkus.sample;
 
 import io.quarkus.panache.common.Sort;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 import java.util.List;
 import org.eclipse.microprofile.graphql.Description;
 import org.eclipse.microprofile.graphql.GraphQLApi;

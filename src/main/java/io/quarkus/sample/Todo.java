@@ -2,9 +2,9 @@ package io.quarkus.sample;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.validation.constraints.NotBlank;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -35,5 +35,7 @@ public class Todo extends PanacheEntity {
     public static long deleteCompleted() {
         return delete("completed", true);
     }
+
+  
 
 }
