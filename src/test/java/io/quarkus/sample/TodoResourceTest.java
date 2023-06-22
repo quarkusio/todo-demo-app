@@ -19,68 +19,72 @@ import static org.hamcrest.CoreMatchers.is;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TodoResourceTest {
 
-    @Test @Order(1)
+    @Test
+    @Order(1)
     public void testGetAll() {
         given()
-            .accept(ContentType.JSON)
-        .when()
-            .get("/api")
-        .then()
-            .statusCode(200)
-            .body(is(ALL));
+                .accept(ContentType.JSON)
+                .when()
+                .get("/api")
+                .then()
+                .statusCode(200)
+                .body(is(ALL));
     }
-    
-    @Test @Order(2)
+
+    @Test
+    @Order(2)
     public void testGet() {
         given()
-            .accept(ContentType.JSON)
-        .when()
-            .get("/api/1")
-        .then()
-            .statusCode(200)
-            .body(is(ONE));
+                .accept(ContentType.JSON)
+                .when()
+                .get("/api/1")
+                .then()
+                .statusCode(200)
+                .body(is(ONE));
     }
 
-    @Test @Order(3)
+    @Test
+    @Order(3)
     public void testCreateNew() {
         given()
-            .contentType(ContentType.JSON)
-        .when()
-            .body(CREATE_NEW)
-            .post("/api")
-        .then()
-            .statusCode(201)
-            .body(is(NEW_CREATED));
+                .contentType(ContentType.JSON)
+                .when()
+                .body(CREATE_NEW)
+                .post("/api")
+                .then()
+                .statusCode(201)
+                .body(is(NEW_CREATED));
     }
 
-    @Test @Order(4)
+    @Test
+    @Order(4)
     public void testUpdate() {
         given()
-            .contentType(ContentType.JSON)
-        .when()
-            .body(UPDATE)
-            .patch("/api/5")
-        .then()
-            .statusCode(200)
-            .body(is(UPDATED));
+                .contentType(ContentType.JSON)
+                .when()
+                .body(UPDATE)
+                .patch("/api/5")
+                .then()
+                .statusCode(200)
+                .body(is(UPDATED));
     }
 
-    @ParameterizedTest @Order(5)
+    @ParameterizedTest
+    @Order(5)
     @MethodSource("todoItemsToDelete")
     public void testDelete(int id, int expectedStatus) {
         given()
                 .pathParam("id", id)
-        .when()
+                .when()
                 .delete("/api/{id}")
-        .then()
+                .then()
                 .statusCode(expectedStatus);
     }
 
     private static Stream<Arguments> todoItemsToDelete() {
         return Stream.of(
                 Arguments.of(5, 204),
-                Arguments.of(15, 404)
-        );
+                Arguments.of(15, 404));
     }
 
     private static final String ALL = "[{\"id\":1,\"completed\":true,\"order\":0,\"title\":\"Introduction to Quarkus\"},{\"id\":2,\"completed\":false,\"order\":1,\"title\":\"Hibernate with Panache\"},{\"id\":3,\"completed\":false,\"order\":2,\"title\":\"Visit Quarkus web site\",\"url\":\"https://quarkus.io\"},{\"id\":4,\"completed\":false,\"order\":3,\"title\":\"Star Quarkus project\",\"url\":\"https://github.com/quarkusio/quarkus/\"}]";

@@ -21,7 +21,7 @@ public class Todo extends PanacheEntity {
     @Column(name = "ordering")
     public int order;
 
-    @Schema(example="https://github.com/quarkusio/todo-demo-app")
+    @Schema(example = "https://github.com/quarkusio/todo-demo-app")
     public String url;
 
     public static List<Todo> findNotCompleted() {
@@ -35,7 +35,5 @@ public class Todo extends PanacheEntity {
     public static long deleteCompleted() {
         return delete("completed", true);
     }
-
-  
 
 }
