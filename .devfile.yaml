@@ -1,6 +1,6 @@
 schemaVersion: 2.2.0
 metadata:
-  name: testcontainers-sample
+  name: quarkus-todo
 components:
   - name: tooling-container
     container:
@@ -29,6 +29,6 @@ commands:
       commandLine: mvn quarkus:dev
   - id: podman-run
     exec:
-      label: '2. podman run sample'
+      label: '2. Podman Run Sample'
       component: tooling-container
       commandLine: podman --remote --url "tcp://127.0.0.1:2475" run --name httpd -d -p 8080:8080 python python -m http.server 8080
