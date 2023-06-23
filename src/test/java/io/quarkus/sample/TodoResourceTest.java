@@ -63,7 +63,7 @@ public class TodoResourceTest {
                 .contentType(ContentType.JSON)
                 .when()
                 .body(UPDATE)
-                .patch("/api/5")
+                .patch("/api/201")
                 .then()
                 .statusCode(200)
                 .body(is(UPDATED));
@@ -83,19 +83,19 @@ public class TodoResourceTest {
 
     private static Stream<Arguments> todoItemsToDelete() {
         return Stream.of(
-                Arguments.of(5, 204),
+                Arguments.of(201, 204),
                 Arguments.of(15, 404));
     }
 
-    private static final String ALL = "[{\"id\":1,\"completed\":true,\"order\":0,\"title\":\"Introduction to Quarkus\"},{\"id\":2,\"completed\":false,\"order\":1,\"title\":\"Hibernate with Panache\"},{\"id\":3,\"completed\":false,\"order\":2,\"title\":\"Visit Quarkus web site\",\"url\":\"https://quarkus.io\"},{\"id\":4,\"completed\":false,\"order\":3,\"title\":\"Star Quarkus project\",\"url\":\"https://github.com/quarkusio/quarkus/\"}]";
+    private static final String ALL = "[{\"id\":1,\"completed\":true,\"order\":0,\"title\":\"Introduction to Quarkus\"},{\"id\":51,\"completed\":false,\"order\":1,\"title\":\"Hibernate with Panache\"},{\"id\":101,\"completed\":false,\"order\":2,\"title\":\"Visit Quarkus web site\",\"url\":\"https://quarkus.io\"},{\"id\":151,\"completed\":false,\"order\":3,\"title\":\"Star Quarkus project\",\"url\":\"https://github.com/quarkusio/quarkus/\"}]";
 
     private static final String ONE = "{\"id\":1,\"completed\":true,\"order\":0,\"title\":\"Introduction to Quarkus\"}";
 
     private static final String CREATE_NEW = "{\"completed\":false,\"order\":0,\"title\":\"Use the REST Endpoint\"}";
 
-    private static final String NEW_CREATED = "{\"id\":5,\"completed\":false,\"order\":0,\"title\":\"Use the REST Endpoint\"}";
+    private static final String NEW_CREATED = "{\"id\":201,\"completed\":false,\"order\":0,\"title\":\"Use the REST Endpoint\"}";
 
-    private static final String UPDATE = "{\"id\":5,\"completed\":false,\"order\":0,\"title\":\"Use the GraphQL Endpoint\"}";
+    private static final String UPDATE = "{\"id\":201,\"completed\":false,\"order\":0,\"title\":\"Use the GraphQL Endpoint\"}";
 
-    private static final String UPDATED = "{\"id\":5,\"completed\":false,\"order\":0,\"title\":\"Use the GraphQL Endpoint\"}";
+    private static final String UPDATED = "{\"id\":201,\"completed\":false,\"order\":0,\"title\":\"Use the GraphQL Endpoint\"}";
 }

@@ -9,10 +9,8 @@ components:
           value: 'tcp://127.0.0.1:2475'
         - name: CONTAINER_HOST
           value: 'tcp://127.0.0.1:2475'
-        - name: TESTCONTAINERS_RYUK_DISABLED
-          value: 'true'
-        - name: TESTCONTAINERS_CHECKS_DISABLE
-          value: 'true'
+        - name: QUARKUS_DATASOURCE_DEVSERVICES_VOLUMES_  # <-- https://quarkus.io/guides/databases-dev-services#quarkus-datasource-config-group-dev-services-build-time-config_quarkus.datasource.devservices.volumes-volumes
+          value: '/var/lib/postgresql/'
       image: quay.io/mloriedo/universal-developer-image:kubedock
       memoryRequest: 2Gi
       memoryLimit: 8Gi
@@ -24,28 +22,13 @@ components:
           protocol: tcp
           targetPort: 2475      
 commands:
-  - id: start-kubedock
-    exec:
-      label: '1. Start kubedock'
-      component: tooling-container
-      commandLine: kubedock server --port-forward
-  - id: test
-    exec:
-      label: '2. Test'
-      component: tooling-container
-      commandLine: ./gradlew test
   - id: run
     exec:
-      label: '3. Run'
+      label: '1. Quarkus Dev'
       component: tooling-container
-      commandLine: ./gradlew run
-  - id: docker-run
-    exec:
-      label: '4. docker run sample'
-      component: tooling-container
-      commandLine: docker run --name httpd -d -p 8080:8080 python python -m http.server 8080
+      commandLine: mvn quarkus:dev
   - id: podman-run
     exec:
-      label: '5. podman run sample'
+      label: '2. podman run sample'
       component: tooling-container
       commandLine: podman --remote --url "tcp://127.0.0.1:2475" run --name httpd -d -p 8080:8080 python python -m http.server 8080
