@@ -73,6 +73,26 @@
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-info</artifactId>
         </dependency>
+        
+        <!-- For the UI -->
+        <dependency>
+            <groupId>io.quarkiverse.quteserverpages</groupId>
+            <artifactId>quarkus-qute-server-pages</artifactId>
+            <version>2.1.1.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkiverse.web-bundler</groupId>
+            <artifactId>quarkus-web-bundler</artifactId>
+            <version>1.1.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.mvnpm.at.mvnpm</groupId>
+            <artifactId>vaadin-webcomponents</artifactId>
+            <version>24.2.1</version>
+        </dependency>
+
+        
+        <!-- Testing -->
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>
