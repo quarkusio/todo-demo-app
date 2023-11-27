@@ -2,9 +2,9 @@ package io.quarkus.sample;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.validation.constraints.NotBlank;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
@@ -21,7 +21,7 @@ public class Todo extends PanacheEntity {
     @Column(name = "ordering")
     public int order;
 
-    @Schema(example="https://github.com/quarkusio/todo-demo-app")
+    @Schema(example = "https://github.com/quarkusio/todo-demo-app")
     public String url;
 
     public static List<Todo> findNotCompleted() {
