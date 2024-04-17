@@ -21,21 +21,22 @@ class TodosCards extends LitElement {
             margin: 8px 0;
             border: 0px solid white;
             font-size: 24px;
-            color: #4d4d4d;
+            color: var(--lumo-body-text-color);
             outline: none;
+            background: var(--lumo-contrast-10pct);
+            width: 450px;
         }
         input::placeholder {
             font-style: italic;
-            color: #d9d9d9;
+            color: var(--lumo-contrast-70pct);
         }
     
         .cards {
             display: flex;
             flex-direction: column;
-            background: white;
-            border: 1px solid #e6e6e6;
-            -webkit-box-shadow: 5px 5px 15px 5px #C2C2C2; 
-            box-shadow: 5px 5px 15px 5px #C2C2C2;
+            border: 1px solid var(--lumo-contrast-20pct);
+            -webkit-box-shadow: 5px 5px 15px 5px var(--lumo-contrast-10pct); 
+            box-shadow: 5px 5px 15px 5px var(--lumo-contrast-10pct);
             min-width: 550px;
         }
         .items {
@@ -50,16 +51,15 @@ class TodosCards extends LitElement {
         }
         
         hr {
-            border-top: 1px solid #e6e6e6;
             border-bottom: none;
             width: 100%;
         }
         
         .select-all-icon {
-            color: grey;
-            opacity: 0.1;
+            color: var(--lumo-contrast-70pct);
             cursor: pointer;
             padding-left: 5px;
+            padding-right: 5px;
         }
     
         .cards-footer {
@@ -68,28 +68,23 @@ class TodosCards extends LitElement {
             padding-bottom: 15px;
             font-size: 14px;
             text-align: center;
-            color: grey;
+            color: var(--lumo-contrast-50pct);
         }
         
         .filter {
-            border: 1px solid white;
-            border-radius: 3px;
             padding: 3px;
         }
         .selected-filter {
-            border: 1px solid #ebd7d7;
-            border-radius: 3px;
+            background: var(--lumo-contrast-10pct);
             padding: 3px;
         }
         
         .filter:hover {
-            border: 1px solid #ebd7d7;
-            border-radius: 3px;
-            padding: 3px;
+            background: var(--lumo-contrast-10pct);
             cursor: pointer;
         }
         .clear-completed:hover {
-            border-bottom: 1px solid #ebd7d7;
+            background: var(--lumo-contrast-10pct);
             cursor: pointer;
         }
         .hide {

@@ -3,13 +3,9 @@ import '@vaadin/horizontal-layout';
 
 class TodosFooter extends LitElement {
     static styles = css`
-        footer {
-            border-top: 1px solid #e6e6e6;
-        }
         footer, footer a {
-            color: #bfbfbf;
+            color: var(--lumo-contrast-70pct);
             font-size: 10px;
-            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
         }
     `;
     
