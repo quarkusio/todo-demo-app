@@ -9,30 +9,26 @@ class TodosTask extends LitElement {
             display: flex;
             justify-content:space-between;
             font-size: 24px;
-            color: #4d4d4d;
             font-weight: 300;
             width: 100%;
             gap: 20px;
         }
         .done-icon {
-            color: green;
-            opacity: 0.2;
+            color: var(--lumo-success-color-50pct);
             cursor: pointer;
             padding-left: 5px;
         }
         .outstanding-icon {
-            color: grey;
-            opacity: 0.1;
+            color: var(--lumo-contrast-30pct);
             cursor: pointer;
             padding-left: 5px;
         }
         .done-text {
             text-decoration: line-through;
-            color: #d9d9d9;
+            color: var(--lumo-contrast-50pct);
         }
         .delete-icon {
-            color: red;
-            opacity: 0.1;
+            color: var(--lumo-error-color);
             cursor: pointer;
             padding-right: 5px;
         }
