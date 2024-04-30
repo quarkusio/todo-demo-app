@@ -13,6 +13,7 @@ class TodosFooter extends LitElement {
         return html`
             <footer>
                 <vaadin-horizontal-layout theme="spacing-xs padding" style="justify-content: center">
+                    <a href="audit.html" target="_blank" class="info">Audit Log</a> .
                     <a href="/q/health" target="_blank" class="info">Health</a> .
                     <a href="/q/swagger-ui" target="_blank">OpenAPI</a> .
                     <a href="/q/graphql-ui" target="_blank">GraphQL</a>

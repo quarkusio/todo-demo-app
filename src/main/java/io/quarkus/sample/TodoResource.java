@@ -1,6 +1,9 @@
 package io.quarkus.sample;
 
+import io.quarkus.sample.audit.AuditType;
 import io.quarkus.panache.common.Sort;
+import io.vertx.core.eventbus.EventBus;
+import jakarta.inject.Inject;
 
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -22,6 +25,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Tag(name = "Todo Resource", description = "All Todo Operations")
 public class TodoResource {
 
+    @Inject
+    EventBus bus; 
+    
     @OPTIONS
     @Operation(hidden = true)
     public Response opt() {
@@ -50,6 +56,7 @@ public class TodoResource {
     @Operation(description = "Create a new todo")
     public Response create(@Valid Todo item) {
         item.persist();
+        bus.publish(AuditType.TODO_ADDED.name(), item);
         return Response.status(Status.CREATED).entity(item).build();
     }
 
@@ -59,11 +66,18 @@ public class TodoResource {
     @Operation(description = "Update an exiting todo")
     public Response update(@Valid Todo todo, @PathParam("id") Long id) {
         Todo entity = Todo.findById(id);
+        if(entity.completed!=todo.completed && todo.completed){
+            bus.publish(AuditType.TODO_CHECKED.name(), todo);
+        }else if(entity.completed!=todo.completed && !todo.completed){
+            bus.publish(AuditType.TODO_UNCHECKED.name(), todo);
+        }
+        
         entity.id = id;
         entity.completed = todo.completed;
         entity.order = todo.order;
         entity.title = todo.title;
         entity.url = todo.url;
+        
         return Response.ok(entity).build();
     }
 
@@ -85,6 +99,7 @@ public class TodoResource {
             throw new WebApplicationException("Todo with id of " + id + " does not exist.", Status.NOT_FOUND);
         }
         entity.delete();
+        bus.publish(AuditType.TODO_REMOVED.name(), entity);
         return Response.noContent().build();
     }
 

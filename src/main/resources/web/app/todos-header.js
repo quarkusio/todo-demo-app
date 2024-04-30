@@ -2,6 +2,7 @@ import {LitElement, css, html} from 'lit';
 import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
+import '@vaadin/tooltip';
 
 class TodosHeader extends LitElement {
   static styles = css`
@@ -28,10 +29,12 @@ class TodosHeader extends LitElement {
         .theme-switch {
             height: 25px;
             position: absolute;
-            right: 10px;
+            right: 30px;
             cursor: pointer;
+            width: 25px;
         }
     `;
+
     static properties = {
         _nextTheme: {state: true},
         _currentTheme: {state: true},
@@ -39,27 +42,53 @@ class TodosHeader extends LitElement {
 
     constructor() {
         super();
-        this._currentTheme = "dark";
-        this._nextTheme = "light";
     }
+
+    connectedCallback() {
+        super.connectedCallback()
+        this._currentTheme = this._retrieveTheme();
+        const body = document.body;
+        body.setAttribute('theme', this._currentTheme);
+    }
+
+    
 
     render() {
       return html`<img class="logo" src="static/quarkus_icon_${this._currentTheme}.png"> <span class="title">todos</span>
-                    <vaadin-icon title="Switch to ${this._nextTheme} theme" class="theme-switch" icon="vaadin:adjust" @click="${this._switchTheme}"></vaadin-icon>
+                  <vaadin-icon id="themeFlipIcon" class="theme-switch" icon="vaadin:adjust" @click="${this._switchTheme}"></vaadin-icon>
+                  <vaadin-tooltip for="themeFlipIcon" text="Switch to ${this._flip(this._currentTheme)} theme" position="start"></vaadin-tooltip>  
               `;
     }
 
     _switchTheme(){
           const body = document.body;
           if (body.getAttribute('theme') === 'light') {
-              this._nextTheme = "light";
               this._currentTheme = "dark";
-              body.setAttribute('theme', 'dark');
           } else {
-              this._nextTheme = "dark";
               this._currentTheme = "light";
-              body.setAttribute('theme', 'light');
           }
+          body.setAttribute('theme', this._currentTheme);
+          this._storeTheme(this._currentTheme);
+    }
+
+    _flip(theme){
+        if (theme === 'light') {
+            return "dark";
+        } else {
+            return "light";
+        }
+    }
+
+    _storeTheme(theme){
+        localStorage.setItem("theme", theme);
+    }
+
+    _retrieveTheme(){
+        let theme = localStorage.getItem("theme");
+        if(theme === null){
+            return "light";
+        }
+        return theme;
     }
 }
 customElements.define('todos-header', TodosHeader);
