@@ -9,7 +9,11 @@ class TodosCards extends LitElement {
     static styles = css`
         :host {
             display: flex;
-            justify-content: center;
+            gap: 20px;
+            flex-direction: column;
+            align-items: center;
+            height: 100%;
+            justify-content: space-between;
         }
         .inputBar {
             display: flex;
@@ -53,6 +57,7 @@ class TodosCards extends LitElement {
         hr {
             border-bottom: none;
             width: 100%;
+            color: var(--lumo-contrast-10pct);
         }
         
         .select-all-icon {
@@ -105,40 +110,19 @@ class TodosCards extends LitElement {
         this._filter = "all";
     }
     
-    render() {
-        return html`<div class="cards">
-            ${this._renderInput()}
-            ${this._renderItems()}
-            ${this._renderFooter()}
-        </div>`;
-    }
-  
     connectedCallback() {
-        super.connectedCallback()
+        super.connectedCallback();
         this._fetchAllTasks();
     }
-    
-    _fetchAllTasks(){
-        fetch("/api")
-            .then(response => response.json())
-            .then(response => this._setAll(response));
+
+    render(){
+        return html`<div class="cards">
+                        ${this._renderInput()}
+                        ${this._renderItems()}
+                        ${this._renderFooter()}
+                    </div>`;
     }
-    
-    _setAll(tasks){
-        this._tasks = tasks;
-        this._filterTasks();
-    }
-    
-    _filterTasks(){
-        if(this._filter === "active"){
-            this._filteredTasks = this._tasks.filter(obj => obj.completed === false);
-        }else if(this._filter === "completed") {
-            this._filteredTasks = this._tasks.filter(obj => obj.completed === true);
-        }else{
-            this._filteredTasks = this._tasks;
-        }
-    }
-    
+
     _renderInput(){
         return html`<div class="inputBar">
                         <vaadin-icon icon="vaadin:chevron-down" class="select-all-icon" @click=${this._selectAll}></vaadin-icon>
@@ -179,6 +163,27 @@ class TodosCards extends LitElement {
                 </div>
                 <span @click="${this._clearCompleted}" class="${clearCompletedClass}">Clear completed</span>
             </div>`;
+    }
+   
+    _fetchAllTasks(){
+        fetch("/api")
+            .then(response => response.json())
+            .then(response => this._setAll(response));
+    }
+    
+    _setAll(tasks){
+        this._tasks = tasks;
+        this._filterTasks();
+    }
+    
+    _filterTasks(){
+        if(this._filter === "active"){
+            this._filteredTasks = this._tasks.filter(obj => obj.completed === false);
+        }else if(this._filter === "completed") {
+            this._filteredTasks = this._tasks.filter(obj => obj.completed === true);
+        }else{
+            this._filteredTasks = this._tasks;
+        }
     }
     
     _getFilterClass(forFilter){

@@ -32,7 +32,6 @@ class TodosTask extends LitElement {
             cursor: pointer;
             padding-right: 5px;
         }
-    
         .hide {
             visibility:hidden;
         }
