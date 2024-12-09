@@ -2,6 +2,7 @@ package io.quarkus.sample;
 
 import io.quarkus.sample.audit.AuditType;
 import io.quarkus.panache.common.Sort;
+import io.quarkus.sample.ai.TodoAiService;
 import io.vertx.core.eventbus.EventBus;
 import jakarta.inject.Inject;
 
@@ -25,6 +26,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 @Tag(name = "Todo Resource", description = "All Todo Operations")
 public class TodoResource {
 
+    @Inject
+    TodoAiService ai; 
+    
     @Inject
     EventBus bus; 
     
@@ -103,4 +107,18 @@ public class TodoResource {
         return Response.noContent().build();
     }
 
+    @GET
+    @Path("/suggest")
+    @Operation(description = "Suggest something to do")
+    @Transactional
+    public Todo suggest() {
+        Todo suggestion = new Todo();
+        
+        String title = ai.suggestSomethingTodo(1,"Features of my TODO list application");
+        title = title.trim();
+        suggestion.title = title;
+        suggestion.persistAndFlush();        
+        return suggestion;
+    }
+    
 }
