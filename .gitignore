@@ -28,3 +28,6 @@ ObjectStore
 
 # VS Code
 .vscode
+/transcript.txt
+/openai.sh
+/podman.sh

@@ -2,6 +2,7 @@ import {LitElement, html, css} from 'lit';
 import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
+import '@vaadin/progress-bar';
 import './todos-task.js';
 import { Notification } from '@vaadin/notification';
 
@@ -95,12 +96,30 @@ class TodosCards extends LitElement {
         .hide {
             visibility:hidden;
         }
+        .suggest {
+            align-self: center;
+            padding: 10px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            font-size: 24px;
+            font-weight: 300;
+            background: var(--lumo-primary-color-50pct);
+            color: var(--lumo-base-color);
+        }
+        .suggest:hover {
+            background: var(--lumo-primary-color);
+        }
+        .loading {
+            padding: 15px;
+            margin-bottom: 5px;
+        }
     `;
     
     static properties = {
         _tasks: {type: Array, state: true},
         _filteredTasks: {type: Array, state: true},
-        _filter: {type: String, state: true}
+        _filter: {type: String, state: true},
+        _isLoading: {type: Boolean, state: true}
     };
     
     constructor() {
@@ -108,6 +127,7 @@ class TodosCards extends LitElement {
         this._tasks = [];
         this._filteredTasks = [];
         this._filter = "all";
+        this._isLoading = false;
     }
     
     connectedCallback() {
@@ -137,12 +157,21 @@ class TodosCards extends LitElement {
                         ${this._filteredTasks.map((task) =>
                             this._renderItem(task)        
                         )}
+                        ${this._renderSuggestion()}
                     </div>`;
         }
     }
     
     _renderItem(task){
         return html`<todos-task id=${task.id} task="${task.title}" ?done=${task.completed} @select=${this._toggleSelect} @delete=${this._deleteItem}></todos-task><hr/>`;
+    }
+    
+    _renderSuggestion(){
+        if(this._isLoading){
+            return html`<vaadin-progress-bar class="loading" indeterminate></vaadin-progress-bar>`;
+        }else{
+            return html`<span class="suggest" @click=${this._suggest}>Suggest something to do</span>`;
+        }
     }
     
     _renderFooter(){
@@ -164,6 +193,13 @@ class TodosCards extends LitElement {
                 <span @click="${this._clearCompleted}" class="${clearCompletedClass}">Clear completed</span>
             </div>`;
     }
+   
+   _suggest(){
+       this._isLoading = true;
+       fetch("/api/suggest")
+            .then(response => response.json())
+            .then(response => this._addToTasks(response));
+   }
    
     _fetchAllTasks(){
         fetch("/api")
@@ -320,6 +356,7 @@ class TodosCards extends LitElement {
     }
     
     _addToTasks(task){
+        this._isLoading = false;
         this._tasks = [
             task,
             ...this._tasks
