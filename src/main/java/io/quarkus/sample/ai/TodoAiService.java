@@ -4,13 +4,14 @@ import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
+import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.context.SessionScoped;
 import java.time.temporal.ChronoUnit;
 import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Timeout;
 
 @RegisterAiService(retrievalAugmentor = TodoRetrievalAugmentor.class)
-@SessionScoped
+@ApplicationScoped
 public interface TodoAiService {
 
     @SystemMessage("You are a helpful assistant in a TODO app")
@@ -26,7 +27,8 @@ public interface TodoAiService {
                  
                  Do NOT repeat any previous suggestions.
                  Do NOT put the response in quotes (") or escaped quotes (\"). 
-                 Remove all spaces from the start and end of the response (trim)
+                 Remove all the extra spaces from the start and end of the response (trim).
+                 If the response contains multiple words, keep the spaces between those words of the response.
                  Do NOT add a new line (\\n).
                  
                  Use the `current todos` as input of things currently on the list, and do NOT repeat any of them.
