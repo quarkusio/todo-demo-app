@@ -16,6 +16,8 @@ public class Todo extends PanacheEntity {
     @Column(unique = true)
     public String title;
 
+    public String description;
+
     public boolean completed;
 
     @Column(name = "ordering")

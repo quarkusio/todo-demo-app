@@ -87,7 +87,7 @@ public class TodoResourceTest {
                 Arguments.of(15, 404));
     }
 
-    private static final String ALL = "[{\"id\":1,\"completed\":true,\"order\":0,\"title\":\"Introduction to Quarkus\"},{\"id\":51,\"completed\":false,\"order\":1,\"title\":\"Hibernate with Panache\"},{\"id\":101,\"completed\":false,\"order\":2,\"title\":\"Visit Quarkus web site\",\"url\":\"https://quarkus.io\"},{\"id\":151,\"completed\":false,\"order\":3,\"title\":\"Star Quarkus project\",\"url\":\"https://github.com/quarkusio/quarkus/\"}]";
+    private static final String ALL = "[{\"id\":1,\"completed\":true,\"order\":0,\"title\":\"Introduction to Quarkus\"},{\"id\":51,\"completed\":false,\"order\":1,\"title\":\"Hibernate with Panache\"},{\"id\":101,\"completed\":false,\"order\":2,\"title\":\"Visit Quarkus web site\",\"url\":\"https://quarkus.io\"},{\"id\":151,\"completed\":false,\"description\":\"Go to GitHub. Find quarkus in the search engine. Star the project. And mention it to your friends!\",\"order\":3,\"title\":\"Star Quarkus project\",\"url\":\"https://github.com/quarkusio/quarkus/\"}]";
 
     private static final String ONE = "{\"id\":1,\"completed\":true,\"order\":0,\"title\":\"Introduction to Quarkus\"}";
 
