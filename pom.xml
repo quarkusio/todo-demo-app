@@ -96,13 +96,6 @@
             <scope>runtime</scope>
         </dependency>-->
         <dependency>
-            <groupId>org.mvnpm.at.mvnpm</groupId>
-            <artifactId>vaadin-webcomponents</artifactId>
-            <version>24.4.10</version>
-            <!--<scope>provided</scope>-->
-            <scope>runtime</scope>
-        </dependency>
-        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-web-dependency-locator</artifactId>
         </dependency>
