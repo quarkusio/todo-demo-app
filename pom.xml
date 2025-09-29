@@ -100,6 +100,11 @@
             <scope>runtime</scope>
         </dependency>-->
         <dependency>
+            <groupId>org.mvnpm.at.mvnpm</groupId>
+            <artifactId>vaadin-webcomponents</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-web-dependency-locator</artifactId>
         </dependency>
@@ -108,12 +113,6 @@
             <artifactId>quarkus-web-bundler</artifactId>
             <version>1.7.3</version>
         </dependency>-->
-        <dependency>
-            <groupId>org.mvnpm.at.mvnpm</groupId>
-            <artifactId>vaadin-webcomponents</artifactId>
-            <!--<scope>provided</scope>-->
-            <scope>runtime</scope>
-        </dependency>
         
         <!-- Testing -->
         <dependency>

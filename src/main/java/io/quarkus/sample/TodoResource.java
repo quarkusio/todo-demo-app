@@ -80,6 +80,7 @@ public class TodoResource {
         entity.completed = todo.completed;
         entity.order = todo.order;
         entity.title = todo.title;
+        entity.description = todo.description;
         entity.url = todo.url;
         
         return Response.ok(entity).build();
@@ -114,7 +115,7 @@ public class TodoResource {
     public Todo suggest() {
         Todo suggestion = new Todo();
         
-        String title = ai.suggestSomethingTodo(1,"Features of my TODO list application");
+        String title = ai.suggestSomethingTodo(1,"Quarkus");
         title = title.trim();
         suggestion.title = title;
         suggestion.persistAndFlush();        

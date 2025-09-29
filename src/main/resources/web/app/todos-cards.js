@@ -163,7 +163,16 @@ class TodosCards extends LitElement {
     }
     
     _renderItem(task){
-        return html`<todos-task id=${task.id} task="${task.title}" ?done=${task.completed} @select=${this._toggleSelect} @delete=${this._deleteItem}></todos-task><hr/>`;
+        return html`<todos-task 
+                        id=${task.id} 
+                        task="${task.title}" 
+                        description="${task.description}" 
+                        order=${task.order} 
+                        url="${task.url}" 
+                        ?done=${task.completed} 
+                        @select=${this._toggleSelect} 
+                        @delete=${this._deleteItem}>
+                    </todos-task><hr/>`;
     }
     
     _renderSuggestion(){
