@@ -38,6 +38,6 @@ public interface TodoAiService {
     String suggestSomethingTodo(@MemoryId int memoryId, String subject);
     
     default String fallback(int memoryId,String subject) {
-        return "Fix AI integration";
+        return "Fix AI integration (missing key?)";
     }
 }
