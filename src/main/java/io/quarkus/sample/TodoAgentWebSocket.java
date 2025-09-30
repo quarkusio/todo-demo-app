@@ -20,9 +20,9 @@ public class TodoAgentWebSocket {
     Multi<String> onOpen(@PathParam String todoId) {
         this.agentStream = Multi.createFrom().emitter(emitter -> {
             this.emitter = emitter;
+            emitter.emit("ok we will find agents for todo " + todoId );
             // The emitter is now available for use elsewhere
         });
-        emitter.emit("ok we will find agents for todo " + todoId );
         return agentStream;
     }
 
