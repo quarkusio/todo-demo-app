@@ -267,7 +267,6 @@ class TodosDetail extends LitElement {
         
         this._webSocket.addEventListener('open', () => {
             this._isConnected = true;
-            this._sendToBackend('initialize');
         });
     
         this._webSocket.addEventListener('message', (event) => {
@@ -302,6 +301,7 @@ class TodosDetail extends LitElement {
         }
         this._webSocket = null;
         this._isConnected = false;
+        this._messageListItems = [];
     }
     
     _renderAIMessageList(){
