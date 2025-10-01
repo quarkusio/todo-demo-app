@@ -5,22 +5,16 @@ import io.a2a.client.ClientEvent;
 import io.a2a.client.MessageEvent;
 import io.a2a.client.TaskEvent;
 import io.a2a.client.TaskUpdateEvent;
+import io.a2a.client.config.ClientConfig;
 import io.a2a.client.http.A2ACardResolver;
-import io.a2a.spec.A2AClientError;
-import io.a2a.spec.AgentCard;
-import io.a2a.spec.Artifact;
-import io.a2a.spec.Message;
-import io.a2a.spec.Part;
-import io.a2a.spec.TaskArtifactUpdateEvent;
-import io.a2a.spec.TaskStatusUpdateEvent;
-import io.a2a.spec.TextPart;
-import io.a2a.spec.UpdateEvent;
+import io.a2a.client.transport.jsonrpc.JSONRPCTransport;
+import io.a2a.client.transport.jsonrpc.JSONRPCTransportConfig;
+import io.a2a.spec.*;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Qualifier;
 import jakarta.ws.rs.Produces;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -59,7 +53,7 @@ public class WeatherAgentProducer {
 
 
     @Produces @WeatherAgent
-    public Client getA2aClient() throws A2AClientError {
+    public Client getA2aClient() throws A2AClientError, A2AClientException {
         // Create a CompletableFuture to handle async response
         final CompletableFuture<String> messageResponse
                 = new CompletableFuture<>();
@@ -74,8 +68,21 @@ public class WeatherAgentProducer {
             error.printStackTrace();
             messageResponse.completeExceptionally(error);
         };
-        //Client client = Client.builder(getCard())
-        return null;
+        ClientConfig clientConfig = new ClientConfig.Builder()
+                .setAcceptedOutputModes(List.of("Text"))
+                .build();
+
+        // Create the client with both JSON-RPC and gRPC transport support.
+        // The A2A server agent's preferred transport is gRPC, since the client
+        // also supports gRPC, this is the transport that will get used
+        Client client = Client.builder(getCard())
+                .addConsumers(consumers)
+                .streamingErrorHandler(streamingErrorHandler)
+                .withTransport(JSONRPCTransport.class,
+                        new JSONRPCTransportConfig())
+                .clientConfig(clientConfig)
+                .build();
+        return client;
     }
 
     private static List<BiConsumer<ClientEvent, AgentCard>> getConsumers(
