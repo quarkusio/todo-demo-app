@@ -4,6 +4,7 @@ import io.a2a.client.Client;
 import io.a2a.client.TaskEvent;
 import io.a2a.client.TaskUpdateEvent;
 import io.a2a.spec.A2AClientException;
+import io.a2a.spec.AgentCard;
 import io.a2a.spec.Artifact;
 import io.a2a.spec.Message;
 import io.a2a.spec.TaskIdParams;
@@ -18,6 +19,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -31,6 +33,8 @@ import static io.quarkus.sample.agents.A2AUtils.extractTextFromParts;
 public class AgentsMediator {
     @Inject @WeatherAgentProducer.WeatherAgent
     private Client weatherClient;
+    @Inject @WeatherAgentProducer.WeatherAgent
+    private AgentCard weatherCard;
     private ClientAgentContextsHolder contextsHolder = new ClientAgentContextsHolder();
 
     @Inject
@@ -60,7 +64,7 @@ public class AgentsMediator {
 
     public void findAgent(ClientAgentContext context) {
         var todo = context.getTodo();
-        var currentAgent = agentSelector.findRelevantAgent(todo.title, todo.description);
+        var currentAgent = agentSelector.findRelevantAgent(todo.title, todo.description, buildDescriptors());
         context.setCurrentAgent(currentAgent);
         Log.infov("Selected agent {0} for todo '{1}'", currentAgent, todo.title);
 
@@ -83,6 +87,11 @@ public class AgentsMediator {
                 sendNoAgentMessage(todoId);
             }
         }
+    }
+
+    private List<AgentDescriptor> buildDescriptors() {
+        var weatherDescriptor = new AgentDescriptor(AGENT.WEATHER, weatherCard);
+        return Arrays.asList(weatherDescriptor);
     }
 
     private void sendNoAgentMessage(String todoId) {

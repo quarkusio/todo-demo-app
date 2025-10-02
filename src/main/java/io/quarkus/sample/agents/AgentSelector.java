@@ -3,6 +3,8 @@ package io.quarkus.sample.agents;
 import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
 
+import java.util.List;
+
 @RegisterAiService
 public interface AgentSelector {
     @UserMessage("""
@@ -15,9 +17,12 @@ public interface AgentSelector {
            Do not return anything else. Do not even return a newline or a leading field. Only the enum.
            
            There is the list of services and their description.
-           WEATHER:
-           - name: Weather agent
-           - description: Helps with weather in the USA, give the weather of a city or a region.
+           {#for a in agents}
+           {a.agent}:
+           - name: {a.name}
+           - description: {a.description ?: ''}
+           
+           {/for}
            
            Here is a list of examples and expected output
            
@@ -40,5 +45,5 @@ public interface AgentSelector {
            Task title: {todoTitle}
            Task description: {todoDescription}
            """)
-    AGENT findRelevantAgent(String todoTitle, String todoDescription);
+    AGENT findRelevantAgent(String todoTitle, String todoDescription, List<AgentDescriptor> agents);
 }
