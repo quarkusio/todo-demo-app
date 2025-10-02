@@ -28,17 +28,20 @@ import java.util.function.Consumer;
 
 import io.quarkus.logging.Log;
 
+import static io.quarkus.sample.agents.A2AUtils.*;
+
 /**
  * @author Emmanuel Bernard emmanuel@hibernate.org
  */
 @ApplicationScoped
 public class WeatherAgentProducer {
-    //private static final Logger LOG = Logger.getLogger(WeatherAgentProducer.class);
 
     @Target({ElementType.METHOD, ElementType.FIELD})
     @Retention(RetentionPolicy.RUNTIME)
     @Qualifier
     public @interface WeatherAgent {}
+
+    @Inject AgentDispatcher agentDispatcher;
 
     @Inject
     @ConfigProperty(name = "agent.weather.url")
@@ -64,9 +67,10 @@ public class WeatherAgentProducer {
 
         // Create error handler for streaming errors
         Consumer<Throwable> streamingErrorHandler = (error) -> {
-            System.out.println("Streaming error occurred: " + error.getMessage());
+            Log.errorv("JDK streaming error occured {0}", error.getMessage());
+            Log.errorv("JDK streaming error occured {0}", error);
             error.printStackTrace();
-            messageResponse.completeExceptionally(error);
+            //messageResponse.completeExceptionally(error);
         };
         ClientConfig clientConfig = new ClientConfig.Builder()
                 .setAcceptedOutputModes(List.of("Text"))
@@ -85,7 +89,7 @@ public class WeatherAgentProducer {
         return client;
     }
 
-    private static List<BiConsumer<ClientEvent, AgentCard>> getConsumers(
+    private List<BiConsumer<ClientEvent, AgentCard>> getConsumers(
             final CompletableFuture<String> messageResponse) {
         List<BiConsumer<ClientEvent, AgentCard>> consumers = new ArrayList<>();
         consumers.add(
@@ -94,7 +98,8 @@ public class WeatherAgentProducer {
                         Message responseMessage = messageEvent.getMessage();
                         String text = extractTextFromParts(responseMessage.getParts());
                         System.out.println("Received message: " + text);
-                        messageResponse.complete(text);
+                        agentDispatcher.receiveMessageFromAgent(responseMessage);
+                        //messageResponse.complete(text);
                     } else if (event instanceof TaskUpdateEvent taskUpdateEvent) {
                         UpdateEvent updateEvent = taskUpdateEvent.getUpdateEvent();
                         if (updateEvent
@@ -102,41 +107,34 @@ public class WeatherAgentProducer {
                             System.out.println(
                                     "Received status-update: "
                                             + taskStatusUpdateEvent.getStatus().state().asString());
+                            agentDispatcher.sendToActivityLog(taskStatusUpdateEvent);
                             if (taskStatusUpdateEvent.isFinal()) {
-                                StringBuilder textBuilder = new StringBuilder();
-                                List<Artifact> artifacts
-                                        = taskUpdateEvent.getTask().getArtifacts();
-                                for (Artifact artifact : artifacts) {
-                                    textBuilder.append(extractTextFromParts(artifact.parts()));
-                                }
-                                String text = textBuilder.toString();
-                                messageResponse.complete(text);
+                                //agentDispatcher.sendTaskArtifacts(taskUpdateEvent);
+//                                StringBuilder textBuilder = new StringBuilder();
+//                                List<Artifact> artifacts
+//                                        = taskUpdateEvent.getTask().getArtifacts();
+//                                for (Artifact artifact : artifacts) {
+//                                    textBuilder.append(extractTextFromParts(artifact.parts()));
+//                                }
+//                                String text = textBuilder.toString();
+                                //messageResponse.complete(text);
                             }
                         } else if (updateEvent instanceof TaskArtifactUpdateEvent
                                 taskArtifactUpdateEvent) {
-                            List<Part<?>> parts = taskArtifactUpdateEvent
-                                    .getArtifact()
-                                    .parts();
-                            String text = extractTextFromParts(parts);
-                            System.out.println("Received artifact-update: " + text);
+                            agentDispatcher.sendTaskArtifacts(taskUpdateEvent);
+//                            List<Part<?>> parts = taskArtifactUpdateEvent
+//                                    .getArtifact()
+//                                    .parts();
+//                            String text = extractTextFromParts(parts);
+//                            System.out.println("Received artifact-update: " + text);
                         }
                     } else if (event instanceof TaskEvent taskEvent) {
                         System.out.println("Received task event: "
                                 + taskEvent.getTask().getId());
+                        agentDispatcher.sendToActivityLog(taskEvent);
                     }
                 });
         return consumers;
     }
 
-    private static String extractTextFromParts(final List<Part<?>> parts) {
-        final StringBuilder textBuilder = new StringBuilder();
-        if (parts != null) {
-            for (final Part<?> part : parts) {
-                if (part instanceof TextPart textPart) {
-                    textBuilder.append(textPart.getText());
-                }
-            }
-        }
-        return textBuilder.toString();
-    }
 }

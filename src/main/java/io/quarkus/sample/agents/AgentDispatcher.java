@@ -1,9 +1,13 @@
 package io.quarkus.sample.agents;
 
 import io.a2a.client.Client;
+import io.a2a.client.TaskEvent;
+import io.a2a.client.TaskUpdateEvent;
 import io.a2a.spec.A2AClientException;
+import io.a2a.spec.Artifact;
 import io.a2a.spec.Message;
 import io.a2a.spec.TaskIdParams;
+import io.a2a.spec.TaskStatusUpdateEvent;
 import io.a2a.spec.TextPart;
 import io.quarkus.logging.Log;
 import io.quarkus.sample.Todo;
@@ -14,8 +18,11 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+
+import static io.quarkus.sample.agents.A2AUtils.extractTextFromParts;
 
 /**
  * @author Emmanuel Bernard emmanuel@hibernate.org
@@ -37,7 +44,7 @@ public class AgentDispatcher {
         if (context.getTaskId() !=  null) {
             try {
                 getCurrentClient(context).cancelTask(new TaskIdParams(context.getTaskId()));
-                context.reset();
+                context.resetOnTaskCompletion();
             } catch (A2AClientException e) {
                 //let's ignore cancellation exception, we are done on our side
             }
@@ -45,7 +52,7 @@ public class AgentDispatcher {
     }
 
 
-    public CompletionStage<Void> onStarAgentEvent(@ObservesAsync ClientAgentContext event) {
+    public CompletionStage<Void> onConversationStart(@ObservesAsync ClientAgentContext event) {
         contextsHolder.addOrUpdateContext(event);
         findAgent(event);
         return CompletableFuture.completedFuture(null);
@@ -60,10 +67,11 @@ public class AgentDispatcher {
         var todoId = context.getTodoId();
         switch (currentAgent) {
             case WEATHER -> {
-                bus.publish(todoId,new AgentMessage(Kind.activity_log, todoId, "The weather agent will look into your todo"));
+                bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "The weather agent will look into your todo"));
                 try {
                     getCurrentClient(context).sendMessage(new Message.Builder()
                             .role(Message.Role.USER)
+                            .contextId(context.getContextId())
                             .parts(new TextPart(todoAsPrompt(todo)))
                             .build()
                     );
@@ -73,7 +81,7 @@ public class AgentDispatcher {
                 }
             }
             case NONE -> {
-                bus.publish(todoId,new AgentMessage(Kind.activity_log, todoId, "No agent has been found for your need, sorry about that!"));
+                bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "No agent has been found for your need, sorry about that!"));
             }
         }
     }
@@ -94,7 +102,7 @@ public class AgentDispatcher {
                 return weatherClient;
             }
             case NONE -> {
-                IllegalStateException illegalStateException = new IllegalStateException("An agent shoud have been picked to call getCurrentClient value: " + currentAgent);
+                IllegalStateException illegalStateException = new IllegalStateException("An agent should have been picked to call getCurrentClient value: " + currentAgent);
                 bus.publish(todoId, new AgentMessage(Kind.activity_log, todoId, "Oops, something failed\n" + illegalStateException.getMessage()));
                 throw illegalStateException;
             }
@@ -120,5 +128,46 @@ public class AgentDispatcher {
             bus.publish(todoId, new AgentMessage(Kind.activity_log, todoId, "Oops, something failed\n" + e.getMessage()));
             throw new RuntimeException(e);
         }
+    }
+
+    public void receiveMessageFromAgent(Message responseMessage) {
+        var context = contextsHolder.getContextFromContextId(responseMessage.getContextId());
+        var payload = A2AUtils.extractTextFromParts(responseMessage.getParts());
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+    }
+
+    public void sendToActivityLog(TaskStatusUpdateEvent taskStatusUpdateEvent) {
+        var taskId = taskStatusUpdateEvent.getTaskId();
+        var context = contextsHolder.getContextFromTaskId(taskId);
+        if (context == null) {
+            context = contextsHolder.getContextFromContextId(taskStatusUpdateEvent.getContextId());
+            context.setTaskId(taskId);
+            contextsHolder.addOrUpdateContext(context);
+        }
+        String payload = "Received status-update for " + taskId + ": "
+                        + taskStatusUpdateEvent.getStatus().state().asString();
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.activity_log, context.getTodoId(), payload));
+    }
+
+    public void sendTaskArtifacts(TaskUpdateEvent taskUpdateEvent) {
+        var context = contextsHolder.getContextFromTaskId(taskUpdateEvent.getTask().getId());
+        StringBuilder textBuilder = new StringBuilder();
+        List<Artifact> artifacts = taskUpdateEvent.getTask().getArtifacts();
+        for (Artifact artifact : artifacts) {
+            textBuilder.append(extractTextFromParts(artifact.parts()));
+        }
+        var payload = textBuilder.toString();
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+    }
+
+    public void sendToActivityLog(TaskEvent taskEvent) {
+        var taskId = taskEvent.getTask().getId();
+        var context = contextsHolder.getContextFromTaskId(taskId);
+        if (context == null) {
+            context = contextsHolder.getContextFromContextId(taskEvent.getTask().getContextId());
+            contextsHolder.addOrUpdateContext(context);
+        }
+        String payload = "Received task event for " + taskId;
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.activity_log, context.getTodoId(), payload));
     }
 }

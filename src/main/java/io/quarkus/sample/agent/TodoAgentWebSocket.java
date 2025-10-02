@@ -50,7 +50,7 @@ public class TodoAgentWebSocket {
         consumers.put(todoId, consumer);
         Todo todo = Todo.findById(Long.parseLong(todoId));
         agentEvent.fireAsync(new ClientAgentContext(todo, todoId));
-        return new AgentMessage(Kind.activity_log, todoId, "Searching an agent for '" + todo.title + "'");
+        return new AgentMessage(Kind.agent_request, todoId, "Searching an agent for '" + todo.title + "'");
     }
 
     @OnTextMessage
