@@ -80,9 +80,13 @@ public class AgentsMediator {
                 }
             }
             case NONE -> {
-                bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "No agent has been found for your need, sorry about that!"));
+                sendNoAgentMessage(todoId);
             }
         }
+    }
+
+    private void sendNoAgentMessage(String todoId) {
+        bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "No agent has been found for your need, sorry about that!"));
     }
 
     private String todoAsPrompt(Todo todo) {
@@ -122,7 +126,12 @@ public class AgentsMediator {
                 .parts(new TextPart(userMessage))
                 .build();
         try {
-            getCurrentClient(context).sendMessage(a2aMessage);
+            if (context.getCurrentAgent() == AGENT.NONE) {
+                sendNoAgentMessage(todoId);
+            }
+            else {
+                getCurrentClient(context).sendMessage(a2aMessage);
+            }
         } catch (A2AClientException e) {
             bus.publish(todoId, new AgentMessage(Kind.activity_log, todoId, "Oops, something failed\n" + e.getMessage()));
         }
