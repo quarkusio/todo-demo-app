@@ -1,9 +1,11 @@
 package io.quarkus.sample.agent;
 
+import io.a2a.spec.A2AClientError;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.sample.Todo;
-import io.quarkus.sample.agents.AgentDispatcher;
+import io.quarkus.sample.agents.AgentsMediator;
 import io.quarkus.sample.agents.ClientAgentContext;
+import io.quarkus.sample.agents.WeatherAgentProducer;
 import io.quarkus.vertx.LocalEventBusCodec;
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.WebSocketConnection;
@@ -29,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TodoAgentWebSocket {
 
     @Inject
-    AgentDispatcher agentDispatcher;
+    AgentsMediator agentsMediator;
 
     @Inject
     EventBus eventBus;
@@ -37,11 +39,22 @@ public class TodoAgentWebSocket {
     @Inject
     Event<ClientAgentContext> agentEvent;
 
+    @Inject
+    WeatherAgentProducer weatherAgentProducer;
+
     Map<String, MessageConsumer<AgentMessage>> consumers = new ConcurrentHashMap<>();
+    boolean agentsReady = false;
 
     @OnOpen
     public AgentMessage onOpen(@PathParam String todoId, WebSocketConnection connection) {
         Log.info("Opening of websocket for todo " + todoId);
+        try {
+            weatherAgentProducer.getCard();
+            agentsReady = true;
+        } catch (A2AClientError e) {
+            Log.warn("Unable to connect to a2a servers, did you start them?");
+            agentsReady = false;
+        }
 
         MessageConsumer<AgentMessage> consumer = eventBus.consumer(todoId, message -> {
             Log.info("Message received from event bus: " + message.body());
@@ -50,17 +63,31 @@ public class TodoAgentWebSocket {
         consumers.put(todoId, consumer);
         Todo todo = Todo.findById(Long.parseLong(todoId));
         agentEvent.fireAsync(new ClientAgentContext(todo, todoId));
-        return new AgentMessage(Kind.agent_request, todoId, "Searching an agent for '" + todo.title + "'");
+
+        if (!agentsReady) {
+            return noAIMessage(todoId);
+        }
+        else {
+            return new AgentMessage(Kind.agent_request, todoId, "Searching an agent for '" + todo.title + "'");
+        }
+    }
+
+    private static AgentMessage noAIMessage(String todoId) {
+        return new AgentMessage(Kind.agent_request, todoId, "Unable to find started agents, Do with AI is not available.");
     }
 
     @OnTextMessage
     void onTextMessage(@PathParam String todoId, AgentMessage agentMessage) {
+        if (!agentsReady) {
+            eventBus.publish(todoId, noAIMessage(todoId));
+            return;
+        }
         if (agentMessage.kind().equals(Kind.user_message)) {
             String userMessage = agentMessage.payload();
             // TODO: Should we check the todoId from the path against the one in the message ? Do we need both ?
-            agentDispatcher.passUserMessage(todoId, userMessage);
+            agentsMediator.passUserMessage(todoId, userMessage);
         } else if (agentMessage.kind().equals(Kind.cancel)) {
-            agentDispatcher.cancel(todoId);
+            agentsMediator.cancel(todoId);
         } else {
             System.out.println(">>>> Ignore !");
             // TODO: Ignore ? Maybe add an error type ? We also need to handle json parsing errors

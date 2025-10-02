@@ -28,7 +28,7 @@ import static io.quarkus.sample.agents.A2AUtils.extractTextFromParts;
  * @author Emmanuel Bernard emmanuel@hibernate.org
  */
 @ApplicationScoped
-public class AgentDispatcher {
+public class AgentsMediator {
     @Inject @WeatherAgentProducer.WeatherAgent
     private Client weatherClient;
     private ClientAgentContextsHolder contextsHolder = new ClientAgentContextsHolder();
@@ -77,7 +77,6 @@ public class AgentDispatcher {
                     );
                 } catch (A2AClientException e) {
                     bus.publish(todoId, new AgentMessage(Kind.activity_log, todoId, "Oops, something failed\n" + e.getMessage()));
-                    throw new RuntimeException(e);
                 }
             }
             case NONE -> {
@@ -126,7 +125,6 @@ public class AgentDispatcher {
             getCurrentClient(context).sendMessage(a2aMessage);
         } catch (A2AClientException e) {
             bus.publish(todoId, new AgentMessage(Kind.activity_log, todoId, "Oops, something failed\n" + e.getMessage()));
-            throw new RuntimeException(e);
         }
     }
 

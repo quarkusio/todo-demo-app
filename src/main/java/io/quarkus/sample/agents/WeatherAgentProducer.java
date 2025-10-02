@@ -41,7 +41,8 @@ public class WeatherAgentProducer {
     @Qualifier
     public @interface WeatherAgent {}
 
-    @Inject AgentDispatcher agentDispatcher;
+    @Inject
+    AgentsMediator agentsMediator;
 
     @Inject
     @ConfigProperty(name = "agent.weather.url")
@@ -57,13 +58,9 @@ public class WeatherAgentProducer {
 
     @Produces @WeatherAgent
     public Client getA2aClient() throws A2AClientError, A2AClientException {
-        // Create a CompletableFuture to handle async response
-        final CompletableFuture<String> messageResponse
-                = new CompletableFuture<>();
-
         // Create consumers for handling client events
         List<BiConsumer<ClientEvent, AgentCard>> consumers
-                = getConsumers(messageResponse);
+                = getConsumers();
 
         // Create error handler for streaming errors
         Consumer<Throwable> streamingErrorHandler = (error) -> {
@@ -89,8 +86,7 @@ public class WeatherAgentProducer {
         return client;
     }
 
-    private List<BiConsumer<ClientEvent, AgentCard>> getConsumers(
-            final CompletableFuture<String> messageResponse) {
+    private List<BiConsumer<ClientEvent, AgentCard>> getConsumers() {
         List<BiConsumer<ClientEvent, AgentCard>> consumers = new ArrayList<>();
         consumers.add(
                 (event, agentCard) -> {
@@ -98,7 +94,7 @@ public class WeatherAgentProducer {
                         Message responseMessage = messageEvent.getMessage();
                         String text = extractTextFromParts(responseMessage.getParts());
                         System.out.println("Received message: " + text);
-                        agentDispatcher.receiveMessageFromAgent(responseMessage);
+                        agentsMediator.receiveMessageFromAgent(responseMessage);
                         //messageResponse.complete(text);
                     } else if (event instanceof TaskUpdateEvent taskUpdateEvent) {
                         UpdateEvent updateEvent = taskUpdateEvent.getUpdateEvent();
@@ -107,7 +103,7 @@ public class WeatherAgentProducer {
                             System.out.println(
                                     "Received status-update: "
                                             + taskStatusUpdateEvent.getStatus().state().asString());
-                            agentDispatcher.sendToActivityLog(taskStatusUpdateEvent);
+                            agentsMediator.sendToActivityLog(taskStatusUpdateEvent);
                             if (taskStatusUpdateEvent.isFinal()) {
                                 //agentDispatcher.sendTaskArtifacts(taskUpdateEvent);
 //                                StringBuilder textBuilder = new StringBuilder();
@@ -121,7 +117,7 @@ public class WeatherAgentProducer {
                             }
                         } else if (updateEvent instanceof TaskArtifactUpdateEvent
                                 taskArtifactUpdateEvent) {
-                            agentDispatcher.sendTaskArtifacts(taskUpdateEvent);
+                            agentsMediator.sendTaskArtifacts(taskUpdateEvent);
 //                            List<Part<?>> parts = taskArtifactUpdateEvent
 //                                    .getArtifact()
 //                                    .parts();
@@ -131,7 +127,7 @@ public class WeatherAgentProducer {
                     } else if (event instanceof TaskEvent taskEvent) {
                         System.out.println("Received task event: "
                                 + taskEvent.getTask().getId());
-                        agentDispatcher.sendToActivityLog(taskEvent);
+                        agentsMediator.sendToActivityLog(taskEvent);
                     }
                 });
         return consumers;
