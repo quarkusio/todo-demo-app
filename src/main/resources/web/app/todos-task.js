@@ -3,6 +3,7 @@ import '@vaadin/icon';
 import '@vaadin/vaadin-lumo-styles/vaadin-iconset.js';
 import '@vaadin/icons';
 import '@vaadin/dialog';
+import '@vaadin/text-field';
 import { dialogFooterRenderer, dialogRenderer } from '@vaadin/dialog/lit.js';
 import './todos-detail.js';
 
@@ -30,13 +31,24 @@ class TodosTask extends LitElement {
             text-decoration: line-through;
             color: var(--lumo-contrast-50pct);
         }
-        .delete-icon {
-            color: var(--lumo-error-color);
+        .icon {
             cursor: pointer;
             padding-right: 5px;
         }
+        .delete-icon {
+            color: var(--lumo-error-color-50pct);
+        }
+        .edit-icon {
+            font-size: initial;
+            color: var(--lumo-primary-text-color);
+        }
         .hide {
             visibility:hidden;
+        }
+        .taskInput {
+            width: 100%;
+            padding-right: 5px;
+            padding-left: 5px;
         }
     `;
     
@@ -47,20 +59,22 @@ class TodosTask extends LitElement {
         order: {type: Number},
         url: {type: String},
         done: {type: Boolean, reflect: true},
-        _deleteButtonClass: {type: String, attribute: false},
-        _dialogOpened: {type: Boolean}
+        _buttonClass: {type: String, attribute: false},
+        _dialogOpened: {type: Boolean},
+        _isInEditMode: {type: Boolean}
     };
   
     constructor() {
         super();
         this.id = -1;
-        this.task = "";
+        this.task = null;
         this.description = "";
         this.order = 0;
         this.url = null;
         this.done = false;
-        this._deleteButtonClass = "hide";
+        this._buttonClass = "hide";
         this._dialogOpened = false;
+        this._isInEditMode = false;
     }
   
     connectedCallback() {
@@ -70,19 +84,46 @@ class TodosTask extends LitElement {
     }
   
     render() {
-        if(this.task){
-            return html`${this._renderDialog()}<span class="item">
-                <span><vaadin-icon icon="${this._icon()}" class="${this._iconClass()}" @click=${this._toggleSelect}></vaadin-icon> 
-                <span class="${this._textClass()}" title="${this.description}" @click="${() => {
+            return html`${this._renderDialog()}
+            <div class="item">
+                ${this._renderText()}
+            </div>`;
+    }
+    
+    _renderText(){
+        if(this._isInEditMode){
+            return html`<vaadin-text-field
+                class="taskInput"
+                placeholder="Enter the task title"
+                .value=${this.task ?? ''}
+                @value-changed=${(e) => (this.task = e.detail.value)}
+                @keydown=${this._maybeSaveOnEnter}
+            >
+                <vaadin-icon title="Save" slot="suffix" icon="vaadin:check" style="cursor:pointer; color:var(--lumo-success-color);"
+                       @click=${this._edit}></vaadin-icon>
+            </vaadin-text-field>`;
+        }else{
+            return html`
+                <div class="selectAndText">
+                    <vaadin-icon icon="${this._icon()}" class="${this._iconClass()}" @click=${this._toggleSelect}></vaadin-icon>
+                    <span class="${this._textClass()}" title="${this.description}" @click="${() => {
                                                                             this._dialogOpened = true;
-                                                                        }}">${this.task}</span></span>
-                ${this._renderDeleteButton()}
-            </span>`;
+                                                                        }}">${this.task}</span>
+                </div>
+                <div class="buttons">
+                        ${this._renderEditButton()}
+                        ${this._renderDeleteButton()}
+                </div>
+                `;
         }
     }
     
     _renderDeleteButton(){
-        return html`<vaadin-icon icon="vaadin:close-small" class="${this._deleteButtonClass}" @click=${this._delete}></vaadin-icon>`;
+        return html`<vaadin-icon icon="vaadin:close-small" title="Delete" class="${this._buttonClass} delete-icon" @click=${this._delete}></vaadin-icon>`;
+    }
+    
+    _renderEditButton(){
+        return html`<vaadin-icon icon="vaadin:pencil" title="Edit" class="${this._buttonClass} edit-icon" @click=${this._showEdit}></vaadin-icon>`;
     }
     
     _renderDialog() {
@@ -137,11 +178,11 @@ class TodosTask extends LitElement {
     };
     
     _handleMouseenter(){
-       this._deleteButtonClass = "delete-icon";
+       this._buttonClass = "icon";
     }
     
     _handleMouseleave(){
-       this._deleteButtonClass = "hide";
+       this._buttonClass = "hide";
     }
     
     _toggleSelect(event){
@@ -153,6 +194,23 @@ class TodosTask extends LitElement {
         event = new CustomEvent('delete', {detail: this.id, bubbles: true, composed: true});
         this.dispatchEvent(event);
         this._dialogOpened = false;
+    }
+    
+    _showEdit(event){
+        this._isInEditMode = true;
+    }
+    
+    _edit(event){
+        event = new CustomEvent('edit', {detail: {id:this.id, task:this.task}, bubbles: true, composed: true});
+        this.dispatchEvent(event);
+        this._isInEditMode = false;
+    }
+    
+    _maybeSaveOnEnter(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          this._edit();
+        }
     }
     
     _icon(){
