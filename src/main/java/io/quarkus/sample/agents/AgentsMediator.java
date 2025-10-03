@@ -4,7 +4,6 @@ import io.a2a.client.Client;
 import io.a2a.client.TaskEvent;
 import io.a2a.client.TaskUpdateEvent;
 import io.a2a.spec.A2AClientException;
-import io.a2a.spec.AgentCard;
 import io.a2a.spec.Artifact;
 import io.a2a.spec.Message;
 import io.a2a.spec.Task;
@@ -22,7 +21,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -34,14 +33,7 @@ import static io.quarkus.sample.agents.A2AUtils.extractTextFromParts;
  */
 @ApplicationScoped
 public class AgentsMediator {
-    @Inject @WeatherAgentProducer.WeatherAgent
-    private Client weatherClient;
-    @Inject @MovieAgentProducer.MovieAgent
-    private Client movieClient;
-    @Inject @WeatherAgentProducer.WeatherAgent
-    private AgentCard weatherCard;
-    @Inject @MovieAgentProducer.MovieAgent
-    private AgentCard movieCard;
+    @Inject AgentProducers agentProducers;
     private ClientAgentContextsHolder contextsHolder = new ClientAgentContextsHolder();
 
     @Inject
@@ -71,9 +63,19 @@ public class AgentsMediator {
 
     public void findAgent(ClientAgentContext context) {
         var todo = context.getTodo();
-        var currentAgent = agentSelector.findRelevantAgent(todo.title, todo.description, buildDescriptors());
+        var agents = buildDescriptors();
+        var proposedAgent = agentSelector.findRelevantAgent(todo.title, todo.description, agents);
+        AGENT currentAgent;
+        //verify selected agent is active
+        if (agents.stream().anyMatch(agentDescriptor -> agentDescriptor.getAgent() == proposedAgent)) {
+            currentAgent = proposedAgent;
+        }
+        else {
+            currentAgent = AGENT.NONE;
+        }
+
         context.setCurrentAgent(currentAgent);
-        Log.infov("Selected agent {0} for todo '{1}'", currentAgent, todo.title);
+        Log.infov("Selected agent {0} for todo '{1}' ", currentAgent, todo.title);
 
         var todoId = context.getTodoId();
         switch (currentAgent) {
@@ -97,9 +99,11 @@ public class AgentsMediator {
     }
 
     private List<AgentDescriptor> buildDescriptors() {
-        var weatherDescriptor = new AgentDescriptor(AGENT.WEATHER, weatherCard);
-        var movieDescriptor = new AgentDescriptor(AGENT.MOVIE, movieCard);
-        return Arrays.asList(weatherDescriptor,movieDescriptor);
+        var result = new ArrayList<AgentDescriptor>();
+        agentProducers.getCards().forEach(
+                (agent, card) -> result.add( new AgentDescriptor(agent, card))
+        );
+        return result;
     }
 
     private void sendNoAgentMessage(String todoId) {
@@ -118,11 +122,16 @@ public class AgentsMediator {
         var todoId = context.getTodoId();
         var currentAgent = context.getCurrentAgent();
         switch (currentAgent) {
-            case WEATHER -> {
-                return weatherClient;
-            }
-            case MOVIE -> {
-                return movieClient;
+            case WEATHER, MOVIE -> {
+                try {
+                    return agentProducers.getA2aClient(currentAgent);
+                } catch (A2AClientException e) {
+                    bus.publish(todoId, new AgentMessage(
+                            Kind.activity_log, todoId,
+                            "A2A Client cannot be built for " + currentAgent + "\n" + e.getMessage())
+                    );
+                    throw new RuntimeException(e);
+                }
             }
             case NONE -> {
                 IllegalStateException illegalStateException = new IllegalStateException("An agent should have been picked to call getCurrentClient value: " + currentAgent);

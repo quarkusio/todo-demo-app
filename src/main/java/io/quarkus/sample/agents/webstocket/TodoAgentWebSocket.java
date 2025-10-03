@@ -1,11 +1,10 @@
 package io.quarkus.sample.agents.webstocket;
 
-import io.a2a.spec.A2AClientError;
 import io.quarkus.runtime.StartupEvent;
 import io.quarkus.sample.Todo;
+import io.quarkus.sample.agents.AgentProducers;
 import io.quarkus.sample.agents.AgentsMediator;
 import io.quarkus.sample.agents.ClientAgentContext;
-import io.quarkus.sample.agents.WeatherAgentProducer;
 import io.quarkus.vertx.LocalEventBusCodec;
 import io.quarkus.websockets.next.OnClose;
 import io.quarkus.websockets.next.WebSocketConnection;
@@ -40,20 +39,17 @@ public class TodoAgentWebSocket {
     Event<ClientAgentContext> agentEvent;
 
     @Inject
-    WeatherAgentProducer weatherAgentProducer;
+    AgentProducers agentProducers;
+    boolean agentsReady = false;
 
     Map<String, MessageConsumer<AgentMessage>> consumers = new ConcurrentHashMap<>();
-    boolean agentsReady = false;
 
     @OnOpen
     public AgentMessage onOpen(@PathParam String todoId, WebSocketConnection connection) {
         Log.info("Opening of websocket for todo " + todoId);
-        try {
-            weatherAgentProducer.getCard();
-            agentsReady = true;
-        } catch (A2AClientError e) {
+        agentsReady = !agentProducers.getCards().isEmpty();
+        if (! agentsReady) {
             Log.warn("Unable to connect to a2a servers, did you start them?");
-            agentsReady = false;
         }
 
         MessageConsumer<AgentMessage> consumer = eventBus.consumer(todoId, message -> {
@@ -62,18 +58,18 @@ public class TodoAgentWebSocket {
         });
         consumers.put(todoId, consumer);
         Todo todo = Todo.findById(Long.parseLong(todoId));
-        agentEvent.fireAsync(new ClientAgentContext(todo, todoId));
 
         if (!agentsReady) {
             return noAIMessage(todoId);
         }
         else {
+            agentEvent.fireAsync(new ClientAgentContext(todo, todoId));
             return new AgentMessage(Kind.agent_message, todoId, "Searching an agent for '" + todo.title + "'");
         }
     }
 
     private static AgentMessage noAIMessage(String todoId) {
-        return new AgentMessage(Kind.agent_message, todoId, "Unable to find started agents, Do with AI is not available.");
+        return new AgentMessage(Kind.agent_message, todoId, "Unable to find A2A agents (are they started), Do with AI is not available.");
     }
 
     @OnTextMessage

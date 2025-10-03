@@ -13,7 +13,6 @@ import io.a2a.spec.A2AClientError;
 import io.a2a.spec.A2AClientException;
 import io.a2a.spec.AgentCard;
 import io.a2a.spec.Message;
-import io.a2a.spec.Task;
 import io.a2a.spec.TaskArtifactUpdateEvent;
 import io.a2a.spec.TaskState;
 import io.a2a.spec.TaskStatus;
@@ -22,16 +21,13 @@ import io.a2a.spec.UpdateEvent;
 import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.inject.Qualifier;
 import jakarta.ws.rs.Produces;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -41,39 +37,59 @@ import static io.quarkus.sample.agents.A2AUtils.extractTextFromParts;
  * @author Emmanuel Bernard emmanuel@hibernate.org
  */
 @ApplicationScoped
-public class MovieAgentProducer {
+public class AgentProducers {
 
-    @Target({ElementType.METHOD, ElementType.FIELD})
-    @Retention(RetentionPolicy.RUNTIME)
-    @Qualifier
-    public @interface MovieAgent {}
+    private Map<AGENT, Client> agents = new HashMap<>();
 
     @Inject
     AgentsMediator agentsMediator;
 
     @Inject
     @ConfigProperty(name = "agent.movie.url")
-    private String url;
+    private String movieUrl;
 
-    @Produces @MovieAgent
-    public AgentCard getCard() throws A2AClientError {
-        AgentCard publicAgentCard = new A2ACardResolver(url).getAgentCard();
-        Log.infov("Weather card loaded: {0}", publicAgentCard.name());
-        return publicAgentCard;
+    @Inject
+    @ConfigProperty(name = "agent.weather.url")
+    private String weatherUrl;
+
+    @Produces
+    public Map<AGENT,AgentCard> getCards() {
+        Map<AGENT, AgentCard> cards = new HashMap<>();
+        addAgentCard(AGENT.WEATHER, weatherUrl, cards);
+        addAgentCard(AGENT.MOVIE, movieUrl, cards);
+        return cards;
+    }
+
+    private void addAgentCard(AGENT agent, String url, Map<AGENT, AgentCard> cards) {
+        try {
+            AgentCard publicAgentCard = new A2ACardResolver(url).getAgentCard();
+            Log.infov("Agent Card loaded: {0}", publicAgentCard.name());
+            cards.put(agent, publicAgentCard);
+        }
+        catch (Exception e) {
+            Log.warnv("Failed reach {0} at {1} because {2}", agent, url, e.getMessage());
+        }
     }
 
 
-    @Produces @MovieAgent
-    public Client getA2aClient() throws A2AClientError, A2AClientException {
+    public Client getA2aClient(AGENT agent) throws A2AClientException {
+        var client = agents.get(agent);
+        if (client == null) {
+            client = buildA2aClient(agent);
+            agents.put(agent, client);
+        }
+        return client;
+    }
+
+    private Client buildA2aClient(AGENT agent) throws A2AClientException {
         // Create consumers for handling client events
         List<BiConsumer<ClientEvent, AgentCard>> consumers
                 = getConsumers();
 
         // Create error handler for streaming errors
         Consumer<Throwable> streamingErrorHandler = (error) -> {
-            Log.errorv("JDK streaming error occured {0}", error);
-            error.printStackTrace();
-            //messageResponse.completeExceptionally(error);
+            Log.errorv("JDK streaming error occured {0}", error.getMessage());
+            //error.printStackTrace();
         };
         ClientConfig clientConfig = new ClientConfig.Builder()
                 .setAcceptedOutputModes(List.of("Text"))
@@ -82,7 +98,7 @@ public class MovieAgentProducer {
         // Create the client with both JSON-RPC and gRPC transport support.
         // The A2A server agent's preferred transport is gRPC, since the client
         // also supports gRPC, this is the transport that will get used
-        Client client = Client.builder(getCard())
+        Client client = Client.builder(getCard(agent))
                 .addConsumers(consumers)
                 .streamingErrorHandler(streamingErrorHandler)
                 .withTransport(JSONRPCTransport.class,
@@ -92,6 +108,10 @@ public class MovieAgentProducer {
         return client;
     }
 
+    private AgentCard getCard(AGENT agent) {
+        return getCards().get(agent);
+    }
+
     private List<BiConsumer<ClientEvent, AgentCard>> getConsumers() {
         List<BiConsumer<ClientEvent, AgentCard>> consumers = new ArrayList<>();
         consumers.add(
@@ -99,54 +119,44 @@ public class MovieAgentProducer {
                     if (event instanceof MessageEvent messageEvent) {
                         Message responseMessage = messageEvent.getMessage();
                         String text = extractTextFromParts(responseMessage.getParts());
-                        System.out.println("Received message: " + text);
+                        Log.infov("Received message: {0}", text);
                         agentsMediator.receiveMessageFromAgent(responseMessage);
                         //messageResponse.complete(text);
                     } else if (event instanceof TaskUpdateEvent taskUpdateEvent) {
                         UpdateEvent updateEvent = taskUpdateEvent.getUpdateEvent();
-                        System.out.println("TaskUpdateEvent: " + event + " \nUpdate event: " + updateEvent);
+                        Log.infov(
+                                "Received TaskUpdateEvent for {0}, status: {1}",
+                                taskUpdateEvent.getTask().getId(),
+                                taskUpdateEvent.getTask().getStatus().state());
                         if (updateEvent
                                 instanceof TaskStatusUpdateEvent taskStatusUpdateEvent) {
-                            System.out.println(
-                                    "Received status-update: "
-                                            + taskStatusUpdateEvent.getStatus().state().asString());
+                            var status = taskStatusUpdateEvent.getStatus();
+                            Log.infov( "Received status-update: {0} ", status.state());
                             agentsMediator.sendToActivityLog(taskStatusUpdateEvent);
                             if (taskStatusUpdateEvent.isFinal()) {
                                 agentsMediator.sendTaskArtifacts(taskUpdateEvent.getTask());
-//                                StringBuilder textBuilder = new StringBuilder();
-//                                List<Artifact> artifacts
-//                                        = taskUpdateEvent.getTask().getArtifacts();
-//                                for (Artifact artifact : artifacts) {
-//                                    textBuilder.append(extractTextFromParts(artifact.parts()));
-//                                }
-//                                String text = textBuilder.toString();
-                                //messageResponse.complete(text);
                             }
-                            else if (taskStatusUpdateEvent.getStatus().state() == TaskState.INPUT_REQUIRED) {
-                                agentsMediator.sendInputRequired(taskStatusUpdateEvent.getTaskId(), taskStatusUpdateEvent.getStatus());
+                            else if (status.state() == TaskState.INPUT_REQUIRED) {
+                                agentsMediator.sendInputRequired(taskStatusUpdateEvent.getTaskId(), status);
                             }
                         } else if (updateEvent instanceof TaskArtifactUpdateEvent
                                 taskArtifactUpdateEvent) {
                             agentsMediator.sendToActivityLog(taskArtifactUpdateEvent);
                             agentsMediator.sendTaskArtifacts(taskArtifactUpdateEvent);
-//                            List<Part<?>> parts = taskArtifactUpdateEvent
-//                                    .getArtifact()
-//                                    .parts();
-//                            String text = extractTextFromParts(parts);
-//                            System.out.println("Received artifact-update: " + text);
+                            Log.infov("Received artifact-update for task {0}: {1}", taskArtifactUpdateEvent.getTaskId(), taskArtifactUpdateEvent.getArtifact().name());
                         }
                     } else if (event instanceof TaskEvent taskEvent) {
                         var task = taskEvent.getTask();
-                        System.out.println("Received task event: "
-                                + task.getId());
+                        Log.infov("Received task event for {0}: status {1}", task.getId(), task.getStatus().state());
                         var state = task.getStatus().state();
                         agentsMediator.sendToActivityLog(taskEvent);
-                        if (state == TaskState.COMPLETED) {
-                            agentsMediator.sendTaskArtifacts(task);
-                            
-                        }
-                        else if (state == TaskState.INPUT_REQUIRED) {
-                            agentsMediator.sendInputRequired(task.getId(), task.getStatus());
+                        switch (state) {
+                            case COMPLETED -> {
+                                agentsMediator.sendTaskArtifacts(task);
+                            }
+                            case INPUT_REQUIRED -> {
+                                agentsMediator.sendInputRequired(task.getId(), task.getStatus());
+                            }
                         }
                     }
                 });
