@@ -1,4 +1,4 @@
-package io.quarkus.sample.agent;
+package io.quarkus.sample.agents.webstocket;
 
 import io.a2a.spec.A2AClientError;
 import io.quarkus.runtime.StartupEvent;
@@ -68,12 +68,12 @@ public class TodoAgentWebSocket {
             return noAIMessage(todoId);
         }
         else {
-            return new AgentMessage(Kind.agent_request, todoId, "Searching an agent for '" + todo.title + "'");
+            return new AgentMessage(Kind.agent_message, todoId, "Searching an agent for '" + todo.title + "'");
         }
     }
 
     private static AgentMessage noAIMessage(String todoId) {
-        return new AgentMessage(Kind.agent_request, todoId, "Unable to find started agents, Do with AI is not available.");
+        return new AgentMessage(Kind.agent_message, todoId, "Unable to find started agents, Do with AI is not available.");
     }
 
     @OnTextMessage
@@ -104,7 +104,7 @@ public class TodoAgentWebSocket {
     }
 
     private void sendAgentRequestMessage(String todoId, String message) {
-        eventBus.publish(todoId, new AgentMessage(Kind.agent_request, todoId, message));
+        eventBus.publish(todoId, new AgentMessage(Kind.agent_message, todoId, message));
     }
 
     private void sendAgentActivityMessage(String todoId, String message) {

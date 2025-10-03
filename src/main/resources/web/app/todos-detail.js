@@ -275,7 +275,7 @@ class TodosDetail extends LitElement {
             
             if(agentMessage.kind && agentMessage.kind === "activity_log"){
                 this._messageListItems = [...this._messageListItems, this._createLogMessage(agentMessage.payload)];
-            }else if(agentMessage.kind && agentMessage.kind === "agent_request"){
+            }else if(agentMessage.kind && agentMessage.kind === "agent_message"){
                 this._messageListItems = [...this._messageListItems, this._createAgentMessage(agentMessage.payload)];
             }else{
                 // TODO: Show in messages

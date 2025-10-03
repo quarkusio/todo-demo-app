@@ -20,7 +20,7 @@ The kinds of messages are as follow:
 * `initialize` : a message the client must send right after opening the websocket
 * `cancel` : a message to send when the user clicks on `Cancel AI` ; after which the websocket connection is closed from the client side
 * `activity_log` : message sent by the server to the client when an activity info is to be displayed. Must have a `payload` field, this is text sent from the server that is to be displayed in **grey**, these strings are tokens / short and need to be concatenated in the "activity" screen, the server is responsible for sending `\n\n` (in a separate message or appended) when a message made of several tokens ends.
-* `agent_request` : message sent by the server to the client when a request to the user is made. Must have a `payload` field, this is text sent from the server that is to be displayed in **dark**, these strings are tokens / short strings and need to be concatenated in the "activity" screen, the server is responsible for sending `\n\n` (in a separate message or appended) when a message made of several tokens ends.
+* `agent_message` : message sent by the server to the client when a request to the user is made. Must have a `payload` field, this is text sent from the server that is to be displayed in **dark**, these strings are tokens / short strings and need to be concatenated in the "activity" screen, the server is responsible for sending `\n\n` (in a separate message or appended) when a message made of several tokens ends.
 * `user_message` : message sent by the client to the server when a user hits send on a chat message. Must have a `payload` field. The whole chat message is sent as one message.
 
 ## UX and interaction

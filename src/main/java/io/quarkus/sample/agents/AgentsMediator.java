@@ -15,8 +15,8 @@ import io.a2a.spec.TaskStatusUpdateEvent;
 import io.a2a.spec.TextPart;
 import io.quarkus.logging.Log;
 import io.quarkus.sample.Todo;
-import io.quarkus.sample.agent.AgentMessage;
-import io.quarkus.sample.agent.Kind;
+import io.quarkus.sample.agents.webstocket.AgentMessage;
+import io.quarkus.sample.agents.webstocket.Kind;
 import io.vertx.core.eventbus.EventBus;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.ObservesAsync;
@@ -78,7 +78,7 @@ public class AgentsMediator {
         var todoId = context.getTodoId();
         switch (currentAgent) {
             case WEATHER,MOVIE -> {
-                bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "The " + currentAgent + " agent will look into your todo"));
+                bus.publish(todoId,new AgentMessage(Kind.agent_message, todoId, "The " + currentAgent + " agent will look into your todo"));
                 try {
                     getCurrentClient(context).sendMessage(new Message.Builder()
                             .role(Message.Role.USER)
@@ -103,7 +103,7 @@ public class AgentsMediator {
     }
 
     private void sendNoAgentMessage(String todoId) {
-        bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "No agent has been found for your need, sorry about that!"));
+        bus.publish(todoId,new AgentMessage(Kind.agent_message, todoId, "No agent has been found for your need, sorry about that!"));
     }
 
     private String todoAsPrompt(Todo todo) {
@@ -160,7 +160,7 @@ public class AgentsMediator {
     public void receiveMessageFromAgent(Message responseMessage) {
         var context = contextsHolder.getContextFromContextId(responseMessage.getContextId());
         var payload = A2AUtils.extractTextFromParts(responseMessage.getParts());
-        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_message, context.getTodoId(), payload));
     }
 
     public void sendToActivityLog(TaskStatusUpdateEvent taskStatusUpdateEvent) {
@@ -194,7 +194,7 @@ public class AgentsMediator {
             bus.publish(context.getTodoId(), new AgentMessage(Kind.activity_log, context.getTodoId(), "Received empty task artifact update event for task " + taskUpdateEvent.getTaskId()));
         }
         var payload = textBuilder.toString();
-        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_message, context.getTodoId(), payload));
     }
     public void sendTaskArtifacts(TaskUpdateEvent taskUpdateEvent) {
         var context = contextsHolder.getContextFromTaskId(taskUpdateEvent.getTask().getId());
@@ -209,7 +209,7 @@ public class AgentsMediator {
             textBuilder.append(extractTextFromParts(taskUpdateEvent.getTask().getStatus().message().getParts()));
         }
         var payload = textBuilder.toString();
-        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_message, context.getTodoId(), payload));
     }
 
 
@@ -226,7 +226,7 @@ public class AgentsMediator {
             textBuilder.append(extractTextFromParts(task.getStatus().message().getParts()));
         }
         var payload = textBuilder.toString();
-        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_message, context.getTodoId(), payload));
     }
 
     public void sendToActivityLog(TaskEvent taskEvent) {
@@ -259,7 +259,7 @@ public class AgentsMediator {
     public void sendInputRequired(String taskId, TaskStatus status) {
         var context = contextsHolder.getContextFromTaskId(taskId);
         var payload = A2AUtils.extractTextFromParts(status.message().getParts());
-        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_message, context.getTodoId(), payload));
     }
 
 }
