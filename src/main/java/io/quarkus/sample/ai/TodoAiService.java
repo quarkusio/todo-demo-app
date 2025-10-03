@@ -5,7 +5,6 @@ import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
 import io.quarkiverse.langchain4j.RegisterAiService;
 import jakarta.enterprise.context.ApplicationScoped;
-import jakarta.enterprise.context.SessionScoped;
 import java.time.temporal.ChronoUnit;
 import org.eclipse.microprofile.faulttolerance.Fallback;
 import org.eclipse.microprofile.faulttolerance.Timeout;
@@ -39,6 +38,6 @@ public interface TodoAiService {
     String suggestSomethingTodo(@MemoryId int memoryId, String subject);
     
     default String fallback(int memoryId,String subject) {
-        return "Fix AI integration";
+        return "Fix AI integration (missing key?)";
     }
 }

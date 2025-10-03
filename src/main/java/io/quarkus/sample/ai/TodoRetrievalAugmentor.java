@@ -7,7 +7,6 @@ import jakarta.inject.Inject;
 
 import dev.langchain4j.rag.DefaultRetrievalAugmentor;
 import dev.langchain4j.rag.RetrievalAugmentor;
-import dev.langchain4j.rag.query.transformer.CompressingQueryTransformer;
 
 @ApplicationScoped
 public class TodoRetrievalAugmentor implements Supplier<RetrievalAugmentor> {
