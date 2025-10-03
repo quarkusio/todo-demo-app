@@ -9,7 +9,17 @@ import io.a2a.client.config.ClientConfig;
 import io.a2a.client.http.A2ACardResolver;
 import io.a2a.client.transport.jsonrpc.JSONRPCTransport;
 import io.a2a.client.transport.jsonrpc.JSONRPCTransportConfig;
-import io.a2a.spec.*;
+import io.a2a.spec.A2AClientError;
+import io.a2a.spec.A2AClientException;
+import io.a2a.spec.AgentCard;
+import io.a2a.spec.Message;
+import io.a2a.spec.Task;
+import io.a2a.spec.TaskArtifactUpdateEvent;
+import io.a2a.spec.TaskState;
+import io.a2a.spec.TaskStatus;
+import io.a2a.spec.TaskStatusUpdateEvent;
+import io.a2a.spec.UpdateEvent;
+import io.quarkus.logging.Log;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.inject.Qualifier;
@@ -22,33 +32,30 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import io.quarkus.logging.Log;
-
-import static io.quarkus.sample.agents.A2AUtils.*;
+import static io.quarkus.sample.agents.A2AUtils.extractTextFromParts;
 
 /**
  * @author Emmanuel Bernard emmanuel@hibernate.org
  */
 @ApplicationScoped
-public class WeatherAgentProducer {
+public class MovieAgentProducer {
 
     @Target({ElementType.METHOD, ElementType.FIELD})
     @Retention(RetentionPolicy.RUNTIME)
     @Qualifier
-    public @interface WeatherAgent {}
+    public @interface MovieAgent {}
 
     @Inject
     AgentsMediator agentsMediator;
 
     @Inject
-    @ConfigProperty(name = "agent.weather.url")
+    @ConfigProperty(name = "agent.movie.url")
     private String url;
 
-    @Produces @WeatherAgent
+    @Produces @MovieAgent
     public AgentCard getCard() throws A2AClientError {
         AgentCard publicAgentCard = new A2ACardResolver(url).getAgentCard();
         Log.infov("Weather card loaded: {0}", publicAgentCard.name());
@@ -56,7 +63,7 @@ public class WeatherAgentProducer {
     }
 
 
-    @Produces @WeatherAgent
+    @Produces @MovieAgent
     public Client getA2aClient() throws A2AClientError, A2AClientException {
         // Create consumers for handling client events
         List<BiConsumer<ClientEvent, AgentCard>> consumers
@@ -136,7 +143,7 @@ public class WeatherAgentProducer {
                         agentsMediator.sendToActivityLog(taskEvent);
                         if (state == TaskState.COMPLETED) {
                             agentsMediator.sendTaskArtifacts(task);
-
+                            
                         }
                         else if (state == TaskState.INPUT_REQUIRED) {
                             agentsMediator.sendInputRequired(task.getId(), task.getStatus());
@@ -145,4 +152,5 @@ public class WeatherAgentProducer {
                 });
         return consumers;
     }
+
 }

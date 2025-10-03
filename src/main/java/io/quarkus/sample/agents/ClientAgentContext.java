@@ -46,7 +46,7 @@ public class ClientAgentContext {
         return todoId;
     }
 
-    public void resetOnTaskCompletion() {
+    public void resetOnTaskTerminalState() {
         //do not reset context id as it is reuable across tasks
         //do not reset current agent as it is reusable for a give task
         //do not reset todoId because technically we should ahndle post cancel / post completed recalls

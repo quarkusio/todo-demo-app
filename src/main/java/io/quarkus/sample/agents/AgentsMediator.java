@@ -7,7 +7,10 @@ import io.a2a.spec.A2AClientException;
 import io.a2a.spec.AgentCard;
 import io.a2a.spec.Artifact;
 import io.a2a.spec.Message;
+import io.a2a.spec.Task;
+import io.a2a.spec.TaskArtifactUpdateEvent;
 import io.a2a.spec.TaskIdParams;
+import io.a2a.spec.TaskStatus;
 import io.a2a.spec.TaskStatusUpdateEvent;
 import io.a2a.spec.TextPart;
 import io.quarkus.logging.Log;
@@ -33,8 +36,12 @@ import static io.quarkus.sample.agents.A2AUtils.extractTextFromParts;
 public class AgentsMediator {
     @Inject @WeatherAgentProducer.WeatherAgent
     private Client weatherClient;
+    @Inject @MovieAgentProducer.MovieAgent
+    private Client movieClient;
     @Inject @WeatherAgentProducer.WeatherAgent
     private AgentCard weatherCard;
+    @Inject @MovieAgentProducer.MovieAgent
+    private AgentCard movieCard;
     private ClientAgentContextsHolder contextsHolder = new ClientAgentContextsHolder();
 
     @Inject
@@ -48,7 +55,7 @@ public class AgentsMediator {
         if (context.getTaskId() !=  null) {
             try {
                 getCurrentClient(context).cancelTask(new TaskIdParams(context.getTaskId()));
-                context.resetOnTaskCompletion();
+                context.resetOnTaskTerminalState();
             } catch (A2AClientException e) {
                 //let's ignore cancellation exception, we are done on our side
             }
@@ -70,8 +77,8 @@ public class AgentsMediator {
 
         var todoId = context.getTodoId();
         switch (currentAgent) {
-            case WEATHER -> {
-                bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "The weather agent will look into your todo"));
+            case WEATHER,MOVIE -> {
+                bus.publish(todoId,new AgentMessage(Kind.agent_request, todoId, "The " + currentAgent + " agent will look into your todo"));
                 try {
                     getCurrentClient(context).sendMessage(new Message.Builder()
                             .role(Message.Role.USER)
@@ -91,7 +98,8 @@ public class AgentsMediator {
 
     private List<AgentDescriptor> buildDescriptors() {
         var weatherDescriptor = new AgentDescriptor(AGENT.WEATHER, weatherCard);
-        return Arrays.asList(weatherDescriptor);
+        var movieDescriptor = new AgentDescriptor(AGENT.MOVIE, movieCard);
+        return Arrays.asList(weatherDescriptor,movieDescriptor);
     }
 
     private void sendNoAgentMessage(String todoId) {
@@ -112,6 +120,9 @@ public class AgentsMediator {
         switch (currentAgent) {
             case WEATHER -> {
                 return weatherClient;
+            }
+            case MOVIE -> {
+                return movieClient;
             }
             case NONE -> {
                 IllegalStateException illegalStateException = new IllegalStateException("An agent should have been picked to call getCurrentClient value: " + currentAgent);
@@ -160,17 +171,59 @@ public class AgentsMediator {
             context.setTaskId(taskId);
             contextsHolder.addOrUpdateContext(context);
         }
+        switch (taskStatusUpdateEvent.getStatus().state()) {
+            case COMPLETED, CANCELED, FAILED, REJECTED, UNKNOWN -> {
+                context.resetOnTaskTerminalState();
+            }
+        }
         String payload = "Received status-update for " + taskId + ": "
-                        + taskStatusUpdateEvent.getStatus().state().asString();
+                        + taskStatusUpdateEvent.getStatus().state().asString()
+                        + (taskStatusUpdateEvent.isFinal()?" (final state)":"");
         bus.publish(context.getTodoId(), new AgentMessage(Kind.activity_log, context.getTodoId(), payload));
     }
 
+    public void sendTaskArtifacts(TaskArtifactUpdateEvent taskUpdateEvent) {
+        var context = contextsHolder.getContextFromTaskId(taskUpdateEvent.getTaskId());
+        StringBuilder textBuilder = new StringBuilder();
+        var artifact = taskUpdateEvent.getArtifact();
+        List<Artifact> artifacts;
+        if (artifact != null) {
+            textBuilder.append(extractTextFromParts(artifact.parts()));
+        }
+        else {
+            bus.publish(context.getTodoId(), new AgentMessage(Kind.activity_log, context.getTodoId(), "Received empty task artifact update event for task " + taskUpdateEvent.getTaskId()));
+        }
+        var payload = textBuilder.toString();
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+    }
     public void sendTaskArtifacts(TaskUpdateEvent taskUpdateEvent) {
         var context = contextsHolder.getContextFromTaskId(taskUpdateEvent.getTask().getId());
         StringBuilder textBuilder = new StringBuilder();
         List<Artifact> artifacts = taskUpdateEvent.getTask().getArtifacts();
-        for (Artifact artifact : artifacts) {
-            textBuilder.append(extractTextFromParts(artifact.parts()));
+        if (artifacts != null) {
+            for (Artifact artifact : artifacts) {
+                textBuilder.append(extractTextFromParts(artifact.parts()));
+            }
+        }
+        else {
+            textBuilder.append(extractTextFromParts(taskUpdateEvent.getTask().getStatus().message().getParts()));
+        }
+        var payload = textBuilder.toString();
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+    }
+
+
+    public void sendTaskArtifacts(Task task) {
+        var context = contextsHolder.getContextFromTaskId(task.getId());
+        StringBuilder textBuilder = new StringBuilder();
+        List<Artifact> artifacts = task.getArtifacts();
+        if (artifacts != null) {
+            for (Artifact artifact : artifacts) {
+                textBuilder.append(extractTextFromParts(artifact.parts()));
+            }
+        }
+        else {
+            textBuilder.append(extractTextFromParts(task.getStatus().message().getParts()));
         }
         var payload = textBuilder.toString();
         bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
@@ -183,7 +236,30 @@ public class AgentsMediator {
             context = contextsHolder.getContextFromContextId(taskEvent.getTask().getContextId());
             contextsHolder.addOrUpdateContext(context);
         }
-        String payload = "Received task event for " + taskId;
+        switch (taskEvent.getTask().getStatus().state()) {
+            case COMPLETED, CANCELED, FAILED, REJECTED, UNKNOWN -> {
+                context.resetOnTaskTerminalState();
+            }
+        }
+        String payload = "Received task event for " + taskId + " with status " + taskEvent.getTask().getStatus().state();
         bus.publish(context.getTodoId(), new AgentMessage(Kind.activity_log, context.getTodoId(), payload));
     }
+
+    public void sendToActivityLog(TaskArtifactUpdateEvent taskArtifactUpdateEvent) {
+        var taskId = taskArtifactUpdateEvent.getTaskId();
+        var context = contextsHolder.getContextFromTaskId(taskId);
+        if (context == null) {
+            context = contextsHolder.getContextFromContextId(taskArtifactUpdateEvent.getContextId());
+            contextsHolder.addOrUpdateContext(context);
+        }
+        String payload = "Received task artifact update event for " + taskId + " (last chunk =  " + taskArtifactUpdateEvent.isLastChunk() + ")";
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.activity_log, context.getTodoId(), payload));
+    }
+
+    public void sendInputRequired(String taskId, TaskStatus status) {
+        var context = contextsHolder.getContextFromTaskId(taskId);
+        var payload = A2AUtils.extractTextFromParts(status.message().getParts());
+        bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_request, context.getTodoId(), payload));
+    }
+
 }
