@@ -9,13 +9,11 @@ import io.a2a.client.config.ClientConfig;
 import io.a2a.client.http.A2ACardResolver;
 import io.a2a.client.transport.jsonrpc.JSONRPCTransport;
 import io.a2a.client.transport.jsonrpc.JSONRPCTransportConfig;
-import io.a2a.spec.A2AClientError;
 import io.a2a.spec.A2AClientException;
 import io.a2a.spec.AgentCard;
 import io.a2a.spec.Message;
 import io.a2a.spec.TaskArtifactUpdateEvent;
 import io.a2a.spec.TaskState;
-import io.a2a.spec.TaskStatus;
 import io.a2a.spec.TaskStatusUpdateEvent;
 import io.a2a.spec.UpdateEvent;
 import io.quarkus.logging.Log;
@@ -134,7 +132,7 @@ public class AgentProducers {
                             Log.infov( "Received status-update: {0} ", status.state());
                             agentsMediator.sendToActivityLog(taskStatusUpdateEvent);
                             if (taskStatusUpdateEvent.isFinal()) {
-                                agentsMediator.sendTaskArtifacts(taskUpdateEvent.getTask());
+                                agentsMediator.sendArtifacts(taskUpdateEvent.getTask());
                             }
                             else if (status.state() == TaskState.INPUT_REQUIRED) {
                                 agentsMediator.sendInputRequired(taskStatusUpdateEvent.getTaskId(), status);
@@ -142,7 +140,7 @@ public class AgentProducers {
                         } else if (updateEvent instanceof TaskArtifactUpdateEvent
                                 taskArtifactUpdateEvent) {
                             agentsMediator.sendToActivityLog(taskArtifactUpdateEvent);
-                            agentsMediator.sendTaskArtifacts(taskArtifactUpdateEvent);
+                            agentsMediator.sendArtifacts(taskArtifactUpdateEvent);
                             Log.infov("Received artifact-update for task {0}: {1}", taskArtifactUpdateEvent.getTaskId(), taskArtifactUpdateEvent.getArtifact().name());
                         }
                     } else if (event instanceof TaskEvent taskEvent) {
@@ -152,7 +150,7 @@ public class AgentProducers {
                         agentsMediator.sendToActivityLog(taskEvent);
                         switch (state) {
                             case COMPLETED -> {
-                                agentsMediator.sendTaskArtifacts(task);
+                                agentsMediator.sendArtifacts(task);
                             }
                             case INPUT_REQUIRED -> {
                                 agentsMediator.sendInputRequired(task.getId(), task.getStatus());

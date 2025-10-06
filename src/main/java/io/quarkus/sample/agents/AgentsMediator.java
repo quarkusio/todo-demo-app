@@ -176,7 +176,7 @@ public class AgentsMediator {
         bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_message, context.getTodoId(), payload));
     }
 
-    public void sendTaskArtifacts(TaskArtifactUpdateEvent taskUpdateEvent) {
+    public void sendArtifacts(TaskArtifactUpdateEvent taskUpdateEvent) {
         var context = contextsHolder.getContextFromTaskId(taskUpdateEvent.getTaskId());
         StringBuilder textBuilder = new StringBuilder();
         var artifact = taskUpdateEvent.getArtifact();
@@ -191,7 +191,7 @@ public class AgentsMediator {
         bus.publish(context.getTodoId(), new AgentMessage(Kind.agent_message, context.getTodoId(), payload));
     }
 
-    public void sendTaskArtifacts(Task task) {
+    public void sendArtifacts(Task task) {
         var context = contextsHolder.getContextFromTaskId(task.getId());
         StringBuilder textBuilder = new StringBuilder();
         List<Artifact> artifacts = task.getArtifacts();
