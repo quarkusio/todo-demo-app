@@ -83,8 +83,7 @@ public class AgentProducers {
 
     private Client buildA2aClient(AGENT agent) throws A2AClientException {
         // Create consumers for handling client events
-        List<BiConsumer<ClientEvent, AgentCard>> consumers
-                = getConsumers();
+        List<BiConsumer<ClientEvent, AgentCard>> consumers = getConsumers();
 
         // Create error handler for streaming errors
         Consumer<Throwable> streamingErrorHandler = (error) -> {
@@ -127,7 +126,8 @@ public class AgentProducers {
                         Log.infov(
                                 "Received TaskUpdateEvent for {0}, status: {1}",
                                 taskUpdateEvent.getTask().getId(),
-                                taskUpdateEvent.getTask().getStatus().state());
+                                taskUpdateEvent.getTask().getStatus().state()
+                        );
                         if (updateEvent
                                 instanceof TaskStatusUpdateEvent taskStatusUpdateEvent) {
                             var status = taskStatusUpdateEvent.getStatus();

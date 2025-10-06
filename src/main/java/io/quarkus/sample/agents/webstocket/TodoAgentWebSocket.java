@@ -47,10 +47,7 @@ public class TodoAgentWebSocket {
     @OnOpen
     public AgentMessage onOpen(@PathParam String todoId, WebSocketConnection connection) {
         Log.info("Opening of websocket for todo " + todoId);
-        agentsReady = !agentProducers.getCards().isEmpty();
-        if (! agentsReady) {
-            Log.warn("Unable to connect to a2a servers, did you start them?");
-        }
+
 
         MessageConsumer<AgentMessage> consumer = eventBus.consumer(todoId, message -> {
             Log.info("Message received from event bus: " + message.body());
@@ -59,7 +56,10 @@ public class TodoAgentWebSocket {
         consumers.put(todoId, consumer);
         Todo todo = Todo.findById(Long.parseLong(todoId));
 
-        if (!agentsReady) {
+        agentsReady = !agentProducers.getCards().isEmpty();
+        if (! agentsReady) {
+            Log.warn("Unable to connect to a2a servers, did you start them?");
+        } if (!agentsReady) {
             return noAIMessage(todoId);
         }
         else {
@@ -99,14 +99,6 @@ public class TodoAgentWebSocket {
         }
     }
 
-    private void sendAgentRequestMessage(String todoId, String message) {
-        eventBus.publish(todoId, new AgentMessage(Kind.agent_message, todoId, message));
-    }
-
-    private void sendAgentActivityMessage(String todoId, String message) {
-        eventBus.publish(todoId, new AgentMessage(Kind.activity_log, todoId, message));
-    }
-
     public void init(@Observes StartupEvent event) {
         eventBus.registerDefaultCodec(AgentMessage.class,
                 new LocalEventBusCodec<AgentMessage>() {
@@ -114,37 +106,3 @@ public class TodoAgentWebSocket {
                 });
     }
 }
-    //private MultiEmitter<? super String> emitter;
-    //private Multi<String> agentStream;
-
-    //@Inject
-    //private AgentDispatcher agents;
-
-    // init message Multi.createFromItem()
-    // ensuite Multi du AI service
-    // concatener les deux Multis
-    // Multi.createBy().concatenating().streams(Multi.createFrom().item("Starting work"), aiServiceMulti);
-    //formatter les messages {kind: initialize kind:token
-    // when end of message in multi, I send \n\n
-    // kind
-    //initiliazize
-    //cancel
-    //user_request
-
-
-    //MultiEmitter / Emittpublicer
-    // by default in memory
-    //@Channel(csdcds)
-    //MutinyEmitter mEmitter;
-
-    //@Channel(csdcds)
-    //Multi<String> multi;
-
-//    void init(@Observes StartupEvent event) {
-//        // Subscribe manually
-//        agentStream.subscribe().with(
-//                item -> System.out.println("Received: " + item),
-//                failure -> System.err.println("Error: " + failure)
-//        );
-//    }
-

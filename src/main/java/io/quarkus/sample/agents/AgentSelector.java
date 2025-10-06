@@ -28,7 +28,7 @@ public interface AgentSelector {
            
            Example 1:
            Todo title: Find holidays for next winter
-           Todo descrption:
+           Todo description:
            NONE
            
            Example 2:
@@ -41,7 +41,7 @@ public interface AgentSelector {
            Todo description: 
            WEATHER
           
-          Here is the task I want ou to find a service for  
+          Here is the task I want you to find a service for  
            Task title: {todoTitle}
            Task description: {todoDescription}
            """)
