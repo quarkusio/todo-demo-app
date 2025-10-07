@@ -70,16 +70,16 @@ public class AgentProducers {
     }
 
 
-    public Client getA2aClient(AGENT agent) throws A2AClientException {
+    public Client getA2AClient(AGENT agent) throws A2AClientException {
         var client = agents.get(agent);
         if (client == null) {
-            client = buildA2aClient(agent);
+            client = buildA2AClient(agent);
             agents.put(agent, client);
         }
         return client;
     }
 
-    private Client buildA2aClient(AGENT agent) throws A2AClientException {
+    private Client buildA2AClient(AGENT agent) throws A2AClientException {
         // Create consumers for handling client events
         List<BiConsumer<ClientEvent, AgentCard>> consumers = getConsumers();
 

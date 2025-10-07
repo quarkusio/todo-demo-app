@@ -2,7 +2,6 @@ package io.quarkus.sample.agents;
 
 import io.a2a.client.Client;
 import io.a2a.client.TaskEvent;
-import io.a2a.client.TaskUpdateEvent;
 import io.a2a.spec.A2AClientException;
 import io.a2a.spec.Artifact;
 import io.a2a.spec.Message;
@@ -56,7 +55,7 @@ public class AgentsMediator {
         AGENT currentAgent;
         currentAgent = verifyAgentPresence(agentDescriptors, proposedAgent);
 
-        context.setCurrentAgent(currentAgent);
+        context.setCurrentA2AAgent(currentAgent);
         Log.infov("Selected agent {0} for todo '{1}' ", currentAgent, todo.title);
 
         var todoId = context.getTodoId();
@@ -64,7 +63,7 @@ public class AgentsMediator {
             case WEATHER,MOVIE -> {
                 bus.publish(todoId,new AgentMessage(Kind.agent_message, todoId, "The " + currentAgent + " agent will look into your todo"));
                 try {
-                    getCurrentClient(context).sendMessage(new Message.Builder()
+                    getCurrentA2AClient(context).sendMessage(new Message.Builder()
                             .role(Message.Role.USER)
                             .contextId(context.getContextId())
                             .parts(new TextPart(todoAsPrompt(todo)))
@@ -112,13 +111,13 @@ public class AgentsMediator {
         return builder.toString();
     }
 
-    private Client getCurrentClient(ClientAgentContext context) {
+    private Client getCurrentA2AClient(ClientAgentContext context) {
         var todoId = context.getTodoId();
-        var currentAgent = context.getCurrentAgent();
+        var currentAgent = context.getCurrentA2AAgent();
         switch (currentAgent) {
             case WEATHER, MOVIE -> {
                 try {
-                    return agentProducers.getA2aClient(currentAgent);
+                    return agentProducers.getA2AClient(currentAgent);
                 } catch (A2AClientException e) {
                     bus.publish(todoId, new AgentMessage(
                             Kind.activity_log, todoId,
@@ -149,9 +148,9 @@ public class AgentsMediator {
                 .parts(new TextPart(userMessage))
                 .build();
         try {
-            switch (context.getCurrentAgent()) {
+            switch (context.getCurrentA2AAgent()) {
                 case NONE -> sendNoAgentMessage(todoId);
-                default -> getCurrentClient(context).sendMessage(a2aMessage);
+                default -> getCurrentA2AClient(context).sendMessage(a2aMessage);
             }
         } catch (A2AClientException e) {
             bus.publish(todoId, new AgentMessage(Kind.activity_log, todoId, "Oops, something failed\n" + e.getMessage()));
@@ -162,7 +161,7 @@ public class AgentsMediator {
         ClientAgentContext context = contextsHolder.getContextFromTodoId(todoId);
         if (context.getTaskId() !=  null) {
             try {
-                getCurrentClient(context).cancelTask(new TaskIdParams(context.getTaskId()));
+                getCurrentA2AClient(context).cancelTask(new TaskIdParams(context.getTaskId()));
                 context.resetOnTaskTerminalState();
             } catch (A2AClientException e) {
                 //let's ignore cancellation exception, we are done on our side

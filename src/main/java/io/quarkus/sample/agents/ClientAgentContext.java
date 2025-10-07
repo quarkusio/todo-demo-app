@@ -18,7 +18,7 @@ public class ClientAgentContext {
         return todo;
     }
 
-    public void setCurrentAgent(AGENT currentAgent) {
+    public void setCurrentA2AAgent(AGENT currentAgent) {
         this.currentAgent = currentAgent;
     }
 
@@ -30,7 +30,7 @@ public class ClientAgentContext {
         this.contextId = contextId;
     }
 
-    public AGENT getCurrentAgent() {
+    public AGENT getCurrentA2AAgent() {
         return currentAgent;
     }
 
