@@ -113,47 +113,50 @@ public class AgentProducers {
         List<BiConsumer<ClientEvent, AgentCard>> consumers = new ArrayList<>();
         consumers.add(
                 (event, agentCard) -> {
-                    if (event instanceof MessageEvent messageEvent) {
-                        Message responseMessage = messageEvent.getMessage();
-                        String text = extractTextFromParts(responseMessage.getParts());
-                        Log.infov("Received message: {0}", text);
-                        agentsMediator.receiveMessageFromAgent(responseMessage);
-                        //messageResponse.complete(text);
-                    } else if (event instanceof TaskUpdateEvent taskUpdateEvent) {
-                        UpdateEvent updateEvent = taskUpdateEvent.getUpdateEvent();
-                        Log.infov(
-                                "Received TaskUpdateEvent for {0}, status: {1}",
-                                taskUpdateEvent.getTask().getId(),
-                                taskUpdateEvent.getTask().getStatus().state()
-                        );
-                        if (updateEvent
-                                instanceof TaskStatusUpdateEvent taskStatusUpdateEvent) {
-                            var status = taskStatusUpdateEvent.getStatus();
-                            Log.infov( "Received status-update: {0} ", status.state());
-                            agentsMediator.sendToActivityLog(taskStatusUpdateEvent);
-                            if (taskStatusUpdateEvent.isFinal()) {
-                                agentsMediator.sendArtifacts(taskUpdateEvent.getTask());
-                            }
-                            else if (status.state() == TaskState.INPUT_REQUIRED) {
-                                agentsMediator.sendInputRequired(taskStatusUpdateEvent.getTaskId(), status);
-                            }
-                        } else if (updateEvent instanceof TaskArtifactUpdateEvent
-                                taskArtifactUpdateEvent) {
-                            agentsMediator.sendToActivityLog(taskArtifactUpdateEvent);
-                            agentsMediator.sendArtifacts(taskArtifactUpdateEvent);
-                            Log.infov("Received artifact-update for task {0}: {1}", taskArtifactUpdateEvent.getTaskId(), taskArtifactUpdateEvent.getArtifact().name());
+                    switch(event) {
+                        case MessageEvent messageEvent -> {
+                            Message responseMessage = messageEvent.getMessage();
+                            String text = extractTextFromParts(responseMessage.getParts());
+                            Log.infov("Received message: {0}", text);
+                            agentsMediator.receiveMessageFromAgent(responseMessage);
                         }
-                    } else if (event instanceof TaskEvent taskEvent) {
-                        var task = taskEvent.getTask();
-                        Log.infov("Received task event for {0}: status {1}", task.getId(), task.getStatus().state());
-                        var state = task.getStatus().state();
-                        agentsMediator.sendToActivityLog(taskEvent);
-                        switch (state) {
-                            case COMPLETED -> {
-                                agentsMediator.sendArtifacts(task);
+                        case TaskEvent taskEvent -> {
+                            var task = taskEvent.getTask();
+                            Log.infov("Received task event for {0}: status {1}", task.getId(), task.getStatus().state());
+                            var state = task.getStatus().state();
+                            agentsMediator.sendToActivityLog(taskEvent);
+                            switch (state) {
+                                case COMPLETED -> {
+                                    agentsMediator.sendArtifacts(task);
+                                }
+                                case INPUT_REQUIRED -> {
+                                    agentsMediator.sendInputRequired(task.getId(), task.getStatus());
+                                }
                             }
-                            case INPUT_REQUIRED -> {
-                                agentsMediator.sendInputRequired(task.getId(), task.getStatus());
+                        }
+                        case TaskUpdateEvent taskUpdateEvent -> {
+                            Log.infov(
+                                    "Received TaskUpdateEvent for {0}, status: {1}",
+                                    taskUpdateEvent.getTask().getId(),
+                                    taskUpdateEvent.getTask().getStatus().state()
+                            );
+                            switch (taskUpdateEvent.getUpdateEvent()) {
+                                case TaskStatusUpdateEvent taskStatusUpdateEvent -> {
+                                    var status = taskStatusUpdateEvent.getStatus();
+                                    Log.infov( "Received status-update: {0} ", status.state());
+                                    agentsMediator.sendToActivityLog(taskStatusUpdateEvent);
+                                    if (taskStatusUpdateEvent.isFinal()) {
+                                        agentsMediator.sendArtifacts(taskUpdateEvent.getTask());
+                                    }
+                                    else if (status.state() == TaskState.INPUT_REQUIRED) {
+                                        agentsMediator.sendInputRequired(taskStatusUpdateEvent.getTaskId(), status);
+                                    }
+                                }
+                                case TaskArtifactUpdateEvent taskArtifactUpdateEvent -> {
+                                    agentsMediator.sendToActivityLog(taskArtifactUpdateEvent);
+                                    agentsMediator.sendArtifacts(taskArtifactUpdateEvent);
+                                    Log.infov("Received artifact-update for task {0}: {1}", taskArtifactUpdateEvent.getTaskId(), taskArtifactUpdateEvent.getArtifact().name());
+                                }
                             }
                         }
                     }
