@@ -7,6 +7,7 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
+.quarkus
 
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
@@ -31,3 +32,10 @@ ObjectStore
 /transcript.txt
 /openai.sh
 /podman.sh
+
+# macOS
+.DS_Store
+
+# Environment
+.env
+.envrc

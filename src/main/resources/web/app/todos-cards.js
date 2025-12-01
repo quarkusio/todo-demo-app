@@ -163,7 +163,17 @@ class TodosCards extends LitElement {
     }
     
     _renderItem(task){
-        return html`<todos-task id=${task.id} task="${task.title}" ?done=${task.completed} @select=${this._toggleSelect} @delete=${this._deleteItem}></todos-task><hr/>`;
+        return html`<todos-task 
+                        id=${task.id} 
+                        task="${task.title}" 
+                        description="${task.description}" 
+                        order=${task.order} 
+                        url="${task.url}" 
+                        ?done=${task.completed} 
+                        @select=${this._toggleSelect} 
+                        @delete=${this._deleteItem}
+                        @edit=${this._editItem}>
+                    </todos-task><hr/>`;
     }
     
     _renderSuggestion(){
@@ -301,6 +311,14 @@ class TodosCards extends LitElement {
         fetch(request)
                     .then(r => this._fetchAllTasks());
         
+    }
+    
+    _editItem(e) {
+        let task = this._tasks.find(t => t.id === e.detail.id);
+        if(task){
+            task.title = e.detail.task;
+            this._updateTask(task);
+        }
     }
     
     _handleDeleteResponse(status) {
