@@ -7,15 +7,16 @@
     <name>TODOS Application</name>
     <properties>
         <compiler-plugin.version>3.11.0</compiler-plugin.version>
-        <maven.compiler.release>17</maven.compiler.release>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.release>21</maven.compiler.release>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
         <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
         <quarkus.platform.version>3.28.1</quarkus.platform.version>
         <quarkus-langchain4j.version>1.2.0</quarkus-langchain4j.version>
+        <a2a-sdk.version>0.3.0.Beta1</a2a-sdk.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.1.2</surefire-plugin.version>
         <failsafe-plugin.version>2.22.2</failsafe-plugin.version>
@@ -40,6 +41,10 @@
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-rest-jsonb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-websockets-next</artifactId>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -82,9 +87,25 @@
             <artifactId>quarkus-websockets</artifactId>
         </dependency>
         <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-messaging</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.quarkiverse.langchain4j</groupId>
             <artifactId>quarkus-langchain4j-openai</artifactId>
             <version>${quarkus-langchain4j.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>io.github.a2asdk</groupId>
+            <artifactId>a2a-java-sdk-client</artifactId>
+            <version>${a2a-sdk.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.github.a2asdk</groupId>
+            <artifactId>a2a-java-sdk-client-transport-jsonrpc</artifactId>
+            <version>${a2a-sdk.version}</version>
         </dependency>
         
         
@@ -96,6 +117,11 @@
             <scope>runtime</scope>
         </dependency>-->
         <dependency>
+            <groupId>org.mvnpm.at.mvnpm</groupId>
+            <artifactId>vaadin-webcomponents</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-web-dependency-locator</artifactId>
         </dependency>
@@ -104,12 +130,6 @@
             <artifactId>quarkus-web-bundler</artifactId>
             <version>1.7.3</version>
         </dependency>-->
-        <dependency>
-            <groupId>org.mvnpm.at.mvnpm</groupId>
-            <artifactId>vaadin-webcomponents</artifactId>
-            <!--<scope>provided</scope>-->
-            <scope>runtime</scope>
-        </dependency>
         
         <!-- Testing -->
         <dependency>

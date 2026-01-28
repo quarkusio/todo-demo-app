@@ -6,7 +6,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
-
 import org.eclipse.microprofile.openapi.annotations.media.Schema;
 
 @Entity
@@ -15,6 +14,8 @@ public class Todo extends PanacheEntity {
     @NotBlank
     @Column(unique = true)
     public String title;
+
+    public String description;
 
     public boolean completed;
 

@@ -1,7 +1,10 @@
-# TODO Application with Quarkus
+# Agentic TODO Application with Quarkus
 
 This is an example application based on a Todo list where the different tasks are created, read, updated, or deleted from the database. This application uses `postgresql` as a database and that is provided with Quarkus Dev Services. When running in a 
 non-dev mode you will have to provide the database yourself. 
+
+This version is the **agentic** version.
+For the non agentic version, look at https://github.com/quarkusio/todo-demo-app
 
 ## Development mode
 
