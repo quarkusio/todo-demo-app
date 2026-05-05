@@ -44,6 +44,24 @@ docker run --ulimit memlock=-1:-1 -it --rm=true \
     -p 5432:5432 postgres:14
 ./target/todo-backend-1.0-SNAPSHOT-runner
 ```
+## Using Podman
+
+If you use [Podman](https://podman.io/) instead of Docker, Dev Services requires the Podman socket to be active and the `DOCKER_HOST` environment variable to be set. A shell alias (`alias docker=podman`) is not sufficient because Quarkus Dev Services connects through the container socket API, not the CLI.
+
+Start the Podman socket and set the required environment variables before running the application:
+
+```bash
+systemctl --user enable --now podman.socket
+export DOCKER_HOST=unix:///run/user/$(id -u)/podman/podman.sock
+export TESTCONTAINERS_RYUK_DISABLED=true
+```
+
+Then start dev mode as usual:
+
+```bash
+mvn compile quarkus:dev
+```
+
 ## Other links
 
 - http://localhost:8080/q/health (Show the build in Health check for the datasource)
