@@ -17,12 +17,12 @@ mvn package
 ```
 Run:
 ```bash
-docker run --ulimit memlock=-1:-1 -it --rm=true \
+docker run --ulimit memlock=-1:-1 -it -d --rm=true \
     --name postgres-quarkus-rest-http-crud \
     -e POSTGRES_USER=restcrud \
     -e POSTGRES_PASSWORD=restcrud \
     -e POSTGRES_DB=rest-crud \
-    -p 5432:5432 postgres:14
+    -p 5432:5432 postgres:18
 java -jar target/quarkus-app/quarkus-run.jar
 ```
 
@@ -36,12 +36,12 @@ mvn clean package -Pnative
 ```
 Run:
 ```bash
-docker run --ulimit memlock=-1:-1 -it --rm=true \
+docker run --ulimit memlock=-1:-1 -it -d --rm=true \
     --name postgres-quarkus-rest-http-crud \
     -e POSTGRES_USER=restcrud \
     -e POSTGRES_PASSWORD=restcrud \
     -e POSTGRES_DB=rest-crud \
-    -p 5432:5432 postgres:14
+    -p 5432:5432 postgres:18
 ./target/todo-backend-1.0-SNAPSHOT-runner
 ```
 ## Using Podman
